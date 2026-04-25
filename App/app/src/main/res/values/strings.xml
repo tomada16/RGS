@@ -1,3 +1,13 @@
 <resources>
-    <string name="app_name">RGS</string>
+    <string name="app_name">Game room</string>
+    <string name="user_balance_format">$%1$,.2f</string>
+
+    <string name="btn_play_now">Play NOW!</string>
+    <string name="game_blackjack_name">Blackjack</string>
+    <string name="game_blackjack_desc">Classic 21 with elite side bets.</string>
+
+    <string name="game_craps_name">Craps</string>
+    <string name="game_craps_desc">The heartbeat of the casino floor. Master the dice.</string>
+
+
 </resources>
