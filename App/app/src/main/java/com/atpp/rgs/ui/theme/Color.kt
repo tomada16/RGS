@@ -2,10 +2,67 @@ package com.atpp.rgs.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+/**
+ * Paleta kolorów aplikacji — dwa poziomy:
+ *
+ *  1. **Brand tokens**     — surowe wartości HEX z brand-booka (źródło prawdy).
+ *                            Nie używaj ich BEZPOŚREDNIO w UI — używaj ról
+ *                            z `MaterialTheme.colorScheme` lub `MaterialTheme.rgsColors`.
+ *
+ *  2. **Shades / extras**  — warianty (light/dark) i pomocnicze odcienie.
+ *                            Pozwalają rozszerzać paletę bez zmiany brandowych pięciu kolorów.
+ *
+ * Mapowanie tokenów -> ról M3 odbywa się w Theme.kt.
+ */
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// ============================================================
+// Brand tokens (źródło: brand-book)
+// ============================================================
+
+/** Główne tło — matowa czerń. */
+val BrandBlack = Color(0xFF0D0D0D)
+
+/** Karty / panele — ciemny szary dający głębię nad tłem. */
+val BrandPanel = Color(0xFF1C1C1C)
+
+/** Akcent Gold — loga, przyciski akcji, podkreślenia. */
+val BrandGold = Color(0xFFE2B044)
+
+/** Akcent Red — głęboki burgund, drugorzędne akcje, elementy alarmowe. */
+val BrandRed = Color(0xFF660000)
+
+/** Tekst główny — czysta biel. */
+val BrandWhite = Color(0xFFFFFFFF)
+
+// Shades — warianty do dalszego rozwoju
+
+/** Powierzchnia podniesiona o jeden poziom nad tłem (np. AppBar, sticky header). */
+val BrandBlackElevated = Color(0xFF161616)
+
+/** Powierzchnia nad panelem (dialog, bottom sheet, modal). */
+val BrandPanelHigh = Color(0xFF252525)
+
+/** Złoto rozjaśnione — hover/pressed na złotych przyciskach, gradient highlight. */
+val BrandGoldLight = Color(0xFFEFC976)
+
+/** Złoto przyciemnione — pressed/disabled state, cień pod złotem. */
+val BrandGoldDark = Color(0xFFB58A2B)
+
+/** Burgund rozjaśniony — hover na czerwonych elementach, błędy (lepsza czytelność). */
+val BrandRedLight = Color(0xFF8C1A1A)
+
+/** Burgund przyciemniony — gradienty, cień. */
+val BrandRedDark = Color(0xFF400000)
+
+/** Tekst drugorzędny / opisowy — biel ze stłumioną jasnością. */
+val BrandTextMuted = Color(0xFFB8B5AE)
+
+/** Tekst nieaktywny / disabled. */
+val BrandTextDisabled = Color(0xFF6B6B6B)
+
+/** Linie podziału, ramki kart. */
+val BrandDivider = Color(0xFF2A2A2A)
+
+/** Półprzezroczysty scrim pod modalami (80% czerni). */
+val BrandScrim = Color(0xCC000000)
+
