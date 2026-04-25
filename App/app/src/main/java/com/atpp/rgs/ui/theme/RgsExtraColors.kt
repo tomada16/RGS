@@ -38,6 +38,7 @@ data class RgsExtraColors(
     val panel: Color,
     val panelHigh: Color,
     val divider: Color,
+    val inputBorder: Color,
     val scrim: Color,
 
     // --- tekst ---
@@ -65,6 +66,7 @@ internal val DefaultRgsExtraColors = RgsExtraColors(
     panel = BrandPanel,
     panelHigh = BrandPanelHigh,
     divider = BrandDivider,
+    inputBorder = BrandOutline,
     scrim = BrandScrim,
 
     textPrimary = BrandWhite,

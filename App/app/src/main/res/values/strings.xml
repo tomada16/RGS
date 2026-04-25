@@ -1,13 +1,38 @@
 <resources>
+    <!-- App-wide -->
     <string name="app_name">Game room</string>
     <string name="user_balance_format">$%1$,.2f</string>
 
+    <!-- Game catalog -->
     <string name="btn_play_now">Play NOW!</string>
     <string name="game_blackjack_name">Blackjack</string>
     <string name="game_blackjack_desc">Classic 21 with elite side bets.</string>
-
     <string name="game_craps_name">Craps</string>
     <string name="game_craps_desc">The heartbeat of the casino floor. Master the dice.</string>
 
+    <!-- ============ Auth screen ============ -->
+    <string name="auth_logo_cd">RGS logo</string>
+    <string name="auth_tagline">ELITE STATUS AWAITS</string>
 
+    <string name="auth_login_title">Welcome Back</string>
+    <string name="auth_login_subtitle">Please enter your credentials to access the VIP Lounge.</string>
+    <string name="auth_register_title">Create Account</string>
+    <string name="auth_register_subtitle">Sign up to claim your seat at the VIP Lounge.</string>
+
+    <string name="auth_label_username">USERNAME</string>
+    <string name="auth_label_password">PASSWORD</string>
+    <string name="auth_label_confirm_password">CONFIRM PASSWORD</string>
+
+    <string name="auth_placeholder_username">Enter account name</string>
+    <string name="auth_placeholder_password">Enter password</string>
+    <string name="auth_placeholder_confirm_password">Repeat password</string>
+
+    <string name="auth_btn_login">LOGIN</string>
+    <string name="auth_btn_register">CREATE ACCOUNT</string>
+
+    <string name="auth_toggle_to_register">Don\'t have an account? Sign up</string>
+    <string name="auth_toggle_to_login">Already have an account? Log in</string>
+
+    <string name="auth_error_password_mismatch">Passwords do not match</string>
+    <string name="auth_error_password_required">Please confirm your password</string>
 </resources>

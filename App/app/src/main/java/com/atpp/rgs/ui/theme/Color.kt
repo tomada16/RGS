@@ -48,11 +48,11 @@ val BrandGoldLight = Color(0xFFEFC976)
 /** Złoto przyciemnione — pressed/disabled state, cień pod złotem. */
 val BrandGoldDark = Color(0xFFB58A2B)
 
-/** Burgund rozjaśniony — hover na czerwonych elementach, błędy (lepsza czytelność). */
-val BrandRedLight = Color(0xFF8C1A1A)
+/** Burgund rozjaśniony — najjaśniejszy stop w gradiencie przycisku, hover na czerwonych elementach. */
+val BrandRedLight = Color(0xFFd11f1f)
 
-/** Burgund przyciemniony — gradienty, cień. */
-val BrandRedDark = Color(0xFF400000)
+/** Burgund przyciemniony — tło paneli formularza, ciemne końce gradientów. */
+val BrandRedDark = Color(0xFF401919)
 
 /** Tekst drugorzędny / opisowy — biel ze stłumioną jasnością. */
 val BrandTextMuted = Color(0xFFB8B5AE)
@@ -62,6 +62,9 @@ val BrandTextDisabled = Color(0xFF6B6B6B)
 
 /** Linie podziału, ramki kart. */
 val BrandDivider = Color(0xFF2A2A2A)
+
+/** Obwódka pól formularza w stanie unfocused — chłodna szarość, dobrze widoczna na burgundzie. */
+val BrandOutline = Color(0xFF464B53)
 
 /** Półprzezroczysty scrim pod modalami (80% czerni). */
 val BrandScrim = Color(0xCC000000)
