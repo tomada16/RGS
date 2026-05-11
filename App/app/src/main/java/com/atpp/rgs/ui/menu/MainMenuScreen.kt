@@ -1,6 +1,5 @@
 package com.atpp.rgs.ui.menu
 
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -44,7 +43,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -54,6 +52,7 @@ import com.atpp.rgs.R
 import com.atpp.rgs.RgsApplication
 import com.atpp.rgs.data.entity.GameEntity
 import com.atpp.rgs.data.entity.WalletEntity
+import com.atpp.rgs.media.MediaAssets
 import com.atpp.rgs.ui.components.GradientButton
 import com.atpp.rgs.ui.profile.ProfileScreen
 import com.atpp.rgs.ui.settings.SettingsScreen
@@ -270,8 +269,12 @@ private fun GameTile(
     onJoin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shape    = RoundedCornerShape(16.dp)
-    val imageRes = gameImageRes(game.name)
+    val shape = RoundedCornerShape(16.dp)
+    // Dynamiczne ładowanie z assets/images/games/<nazwa_gry>_mainmenu.png
+    // Brak pliku = null → wyświetlany jest kolorowy fallback.
+    val imageBitmap = MediaAssets.rememberAssetImage(
+        "games/${game.name.lowercase(Locale.ROOT)}_mainmenu.png"
+    )
 
     Box(
         modifier = modifier
@@ -282,9 +285,9 @@ private fun GameTile(
             .clickable { onJoin() }  // kliknięcie w dowolne miejsce kafelka
     ) {
         // ── Zdjęcie gry jako tło ──
-        if (imageRes != null) {
+        if (imageBitmap != null) {
             Image(
-                painter            = painterResource(imageRes),
+                bitmap             = imageBitmap,
                 contentDescription = stringResource(R.string.menu_cd_game_image, game.name),
                 contentScale       = ContentScale.Crop,
                 modifier           = Modifier.fillMaxSize()
@@ -343,17 +346,6 @@ private fun GameTile(
             )
         }
     }
-}
-
-/**
- * Mapowanie nazwa gry → zasób drawable.
- * Aby dodać kolejną grę: dopisz wpis i wrzuć plik PNG do res/drawable/.
- */
-@DrawableRes
-private fun gameImageRes(name: String): Int? = when (name.lowercase(Locale.ROOT)) {
-    "blackjack" -> R.drawable.blackjack_mainmenu
-    "craps"     -> R.drawable.craps_mainmenu
-    else        -> null
 }
 
 // ─────────────────────────────────────────────────────────────
