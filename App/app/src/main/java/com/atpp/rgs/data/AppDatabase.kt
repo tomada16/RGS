@@ -36,8 +36,26 @@ abstract class AppDatabase : RoomDatabase() {
          * Wstawia predefiniowane gry za pomocą surowego SQL (synchronicznie,
          */
         val seedCallback: Callback = object : Callback() {
+
+            /** Nowa instalacja — baza właśnie powstała, wstawiamy gry. */
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
+                insertSeedGames(db)
+            }
+
+            /**
+             * Każde otwarcie bazy — wstawiamy gry tylko jeśli tabela jest pusta.
+             * Obsługuje przypadek gdy baza istniała przed dodaniem seedów
+             * (onCreate nie odpala się ponownie przy aktualizacji aplikacji).
+             */
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                super.onOpen(db)
+                val cursor = db.query("SELECT COUNT(*) FROM games")
+                val isEmpty = cursor.use { c -> c.moveToFirst() && c.getInt(0) == 0 }
+                if (isEmpty) insertSeedGames(db)
+            }
+
+            private fun insertSeedGames(db: SupportSQLiteDatabase) {
                 SEED_GAMES.forEach { (name, description) ->
                     db.execSQL(
                         "INSERT INTO games (name, description) VALUES (?, ?)",

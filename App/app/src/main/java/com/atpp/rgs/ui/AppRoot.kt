@@ -38,7 +38,7 @@ fun AppRoot(app: RgsApplication) {
             contentAlignment = Alignment.Center
         ) { CircularProgressIndicator() }
         null -> AuthScreen(app = app)
-        else -> MainMenuScreen(app = app)
+        else -> MainMenuScreen(app = app, userId = requireNotNull(sessionState))
     }
 }
 
