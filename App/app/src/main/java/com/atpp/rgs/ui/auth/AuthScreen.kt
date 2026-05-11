@@ -64,24 +64,13 @@ fun AuthScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    // Tło całego ekranu — pionowy gradient: lekki burgund na górze i dole, czarny w środku.
-    val screenBg = Brush.verticalGradient(
-        0.00f to BrandRedDark,
-        0.06f to BrandBlack,
-        0.45f to BrandBlack,
-        0.50f to BrandRedDark.copy(alpha = 0.85f),
-        1.00f to BrandRedDark
-    )
-
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(screenBg)
+            .background(BrandBlack)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(Modifier.height(40.dp))
@@ -91,6 +80,7 @@ fun AuthScreen(
             Spacer(Modifier.height(28.dp))
 
             FormPanel(
+                modifier = Modifier.weight(1f),
                 state = state,
                 onUsername = viewModel::onUsernameChange,
                 onPassword = viewModel::onPasswordChange,
@@ -140,6 +130,7 @@ private fun BrandLogoHeader() {
 
 @Composable
 private fun FormPanel(
+    modifier: Modifier = Modifier,
     state: AuthUiState,
     onUsername: (String) -> Unit,
     onPassword: (String) -> Unit,
@@ -155,9 +146,10 @@ private fun FormPanel(
     )
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(panelBg)
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 28.dp)
     ) {
         Text(
