@@ -91,6 +91,7 @@ enum class MainTab(
 fun MainMenuScreen(
     app: RgsApplication,
     userId: Int,
+    onJoinGame: (GameEntity) -> Unit = {},
     viewModel: MainMenuViewModel = viewModel(factory = MainMenuViewModel.factory(app, userId))
 ) {
     val games  by viewModel.games.collectAsState()
@@ -110,7 +111,7 @@ fun MainMenuScreen(
             MainTab.MENU -> MenuContent(
                 games      = games,
                 wallet     = wallet,
-                onJoinGame = { /* TODO: nawigacja do ekranu gry */ },
+                onJoinGame = onJoinGame,
                 modifier   = Modifier.padding(innerPadding)
             )
             MainTab.SHOP -> ShopScreen(

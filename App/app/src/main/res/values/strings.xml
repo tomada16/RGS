@@ -50,4 +50,34 @@
 
     <string name="auth_error_password_mismatch">Passwords do not match</string>
     <string name="auth_error_password_required">Please confirm your password</string>
+
+    <!-- ============ Craps ============ -->
+    <!-- Table / point indicator -->
+    <string name="craps_roll_to_start">ROLL TO START</string>
+    <string name="craps_point_label">POINT</string>
+
+    <!-- Bets -->
+    <string name="craps_place_your_bets">PLACE YOUR BETS</string>
+    <string name="craps_bet_pass">PASS</string>
+    <string name="craps_bet_line">LINE</string>
+
+    <!-- Bottom bar -->
+    <string name="craps_current_bet_label">CURRENT BET</string>
+    <string name="craps_btn_roll">ROLL</string>
+
+    <!-- Accessibility descriptions -->
+    <string name="craps_cd_balance">Wallet balance</string>
+    <string name="craps_cd_exit">Exit game</string>
+    <string name="craps_cd_undo">Undo bet</string>
+
+    <!-- Round result -->
+    <string name="craps_result_win_title">WIN!</string>
+    <string name="craps_result_lose_title">LOSE</string>
+    <string name="craps_result_win_subtitle">Pass Line wins</string>
+    <string name="craps_result_lose_subtitle">Try again</string>
+    <string name="craps_btn_new_round">NEW ROUND</string>
+
+    <!-- Error messages -->
+    <string name="craps_error_insufficient_funds">Insufficient funds!</string>
+    <string name="craps_error_no_bet">Place a bet before rolling!</string>
 </resources>
