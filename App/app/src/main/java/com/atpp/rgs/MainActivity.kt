@@ -4,10 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
 import com.atpp.rgs.ui.AppRoot
 import com.atpp.rgs.ui.theme.RGSTheme
 
@@ -18,13 +14,9 @@ class MainActivity : ComponentActivity() {
         val app = application as RgsApplication
         setContent {
             RGSTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    androidx.compose.foundation.layout.Box(
-                        modifier = Modifier.fillMaxSize().padding(innerPadding)
-                    ) {
-                        AppRoot(app = app)
-                    }
-                }
+                // Usunięty zduplikowany Scaffold!
+                // Teraz ekrany wewnątrz (jak MainMenuScreen) same zarządzą swoimi marginesami.
+                AppRoot(app = app)
             }
         }
     }

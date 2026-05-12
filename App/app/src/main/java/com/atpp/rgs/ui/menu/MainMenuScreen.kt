@@ -92,7 +92,8 @@ enum class MainTab(
 fun MainMenuScreen(
     app: RgsApplication,
     userId: Int,
-    viewModel: MainMenuViewModel = viewModel(factory = MainMenuViewModel.factory(app, userId))
+    viewModel: MainMenuViewModel = viewModel(factory = MainMenuViewModel.factory(app, userId)),
+    onNavigateToBlackjack: () -> Unit
 ) {
     val games  by viewModel.games.collectAsState()
     val wallet by viewModel.wallet.collectAsState()
@@ -111,9 +112,15 @@ fun MainMenuScreen(
             MainTab.MENU -> MenuContent(
                 games      = games,
                 wallet     = wallet,
-                onJoinGame = { /* TODO: nawigacja do ekranu gry */ },
+                onJoinGame = { game ->
+                    when (game.name.lowercase(Locale.ROOT)) {
+                        "blackjack" -> onNavigateToBlackjack()
+                        // "craps" -> onNavigateToCraps() // Miejsce na kolejne gry
+                    }
+                },
                 modifier   = Modifier.padding(innerPadding)
             )
+            // PRZYWRÓCONE ZAKŁADKI KOLEGI:
             MainTab.SHOP -> ShopScreen(
                 modifier = Modifier.padding(innerPadding)
             )
@@ -351,8 +358,8 @@ private fun GameTile(
  */
 @DrawableRes
 private fun gameImageRes(name: String): Int? = when (name.lowercase(Locale.ROOT)) {
-    "blackjack" -> R.drawable.blackjack_mainmenu
-    "craps"     -> R.drawable.craps_mainmenu
+    "blackjack" -> R.drawable.bg_blackjack
+    "craps"     -> R.drawable.bg_craps
     else        -> null
 }
 
