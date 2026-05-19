@@ -93,7 +93,7 @@ fun MainMenuScreen(
     app: RgsApplication,
     userId: Int,
     viewModel: MainMenuViewModel = viewModel(factory = MainMenuViewModel.factory(app, userId)),
-    onNavigateToBlackjack: () -> Unit
+    onNavigateToBlackjack: () -> Unit // ZACHOWANA TWOJA NAWIGACJA
 ) {
     val games  by viewModel.games.collectAsState()
     val wallet by viewModel.wallet.collectAsState()
@@ -113,6 +113,7 @@ fun MainMenuScreen(
                 games      = games,
                 wallet     = wallet,
                 onJoinGame = { game ->
+                    // ZACHOWANA TWOJA LOGIKA KLIKNIĘCIA
                     when (game.name.lowercase(Locale.ROOT)) {
                         "blackjack" -> onNavigateToBlackjack()
                         // "craps" -> onNavigateToCraps() // Miejsce na kolejne gry
@@ -120,7 +121,6 @@ fun MainMenuScreen(
                 },
                 modifier   = Modifier.padding(innerPadding)
             )
-            // PRZYWRÓCONE ZAKŁADKI KOLEGI:
             MainTab.SHOP -> ShopScreen(
                 modifier = Modifier.padding(innerPadding)
             )
@@ -146,8 +146,6 @@ private fun MenuContent(
     onJoinGame: (GameEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Gradient tła: czarne krawędzie (więcej czerninego od góry i dołu)
-    // rozjaśniające się ku środkowi gdzie dominuje czerwień.
     val bgGradient = Brush.verticalGradient(
         0.00f to BrandBlack,
         0.28f to BrandRedDark,
@@ -157,11 +155,8 @@ private fun MenuContent(
     )
 
     Column(modifier = modifier.fillMaxSize()) {
-
-        // ── Górny pasek (portfel) ──────────────────────────────
         MainTopBar(wallet = wallet)
 
-        // ── Złota linia oddzielająca pasek od treści ──────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -169,7 +164,6 @@ private fun MenuContent(
                 .background(BrandGold)
         )
 
-        // ── Obszar z grami: gradient tła + przewijalna lista ──
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -207,10 +201,8 @@ private fun MainTopBar(wallet: WalletEntity?) {
             .padding(horizontal = 20.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Lewa strona — puste miejsce na przyszłe elementy (np. avatar)
         Spacer(Modifier.weight(1f))
 
-        // Prawa strona — saldo portfela z bazy danych
         Icon(
             imageVector        = Icons.Filled.MonetizationOn,
             contentDescription = stringResource(R.string.menu_cd_coins),
@@ -286,9 +278,8 @@ private fun GameTile(
             .fillMaxWidth()
             .height(240.dp)
             .clip(shape)
-            .clickable { onJoin() }  // kliknięcie w dowolne miejsce kafelka
+            .clickable { onJoin() }
     ) {
-        // ── Zdjęcie gry jako tło ──
         if (imageRes != null) {
             Image(
                 painter            = painterResource(imageRes),
@@ -297,7 +288,6 @@ private fun GameTile(
                 modifier           = Modifier.fillMaxSize()
             )
         } else {
-            // Fallback gdy brak zdjęcia dla tej gry
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -307,8 +297,6 @@ private fun GameTile(
             )
         }
 
-        // ── Gradient nakładka: przezroczysta u góry → ciemna u dołu ──
-        // Sprawia że tekst i przycisk na dole są zawsze czytelne.
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -321,7 +309,6 @@ private fun GameTile(
                 )
         )
 
-        // ── Tekst + przycisk JOIN w dolnej części kafelka ──
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -386,7 +373,7 @@ private fun MainBottomNavBar(
                         contentDescription = stringResource(tab.labelRes)
                     )
                 },
-                label = null,          // brak etykiet — tylko ikony
+                label = null,
                 alwaysShowLabel = false,
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor   = BrandGold,

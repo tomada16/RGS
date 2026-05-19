@@ -17,18 +17,30 @@ import com.atpp.rgs.ui.auth.AuthScreen
 import com.atpp.rgs.ui.blackjack.BlackjackScreen
 import com.atpp.rgs.ui.menu.MainMenuScreen
 
+/**
+ * Root composable — obserwuje stan sesji użytkownika i zarządza głównym
+ * drzewem nawigacji (NavHost) w całej aplikacji.
+ *
+ * Stany sesji:
+ * - sessionState == LOADING_SENTINEL -> Odczyt asynchroniczny z DataStore -> Pokazuje spinner ładowania
+ * - sessionState == null             -> Użytkownik niezalogowany          -> Przekierowanie do ekranu logowania (auth)
+ * - sessionState != null             -> Aktywna sesja (poprawny userId)   -> Start w Menu Głównym (main_menu)
+ *
+ * Wykorzystuje Jetpack Compose Navigation do płynnego przechodzenia między modułami,
+ * w tym bezpiecznego powrotu do ekranu logowania po wywołaniu akcji wylogowania.
+ */
 @Composable
 fun AppRoot(app: RgsApplication) {
     val navController = rememberNavController()
 
-    // Obserwujemy sesję
+    // Obserwujemy sesję użytkownika z DataStore
     val sessionState by app.sessionManager.currentUserId
         .collectAsState(initial = LOADING_SENTINEL)
 
-    // Reagujemy na zmianę stanu sesji (automatyczne wylogowanie/zalogowanie)
+    // Reagujemy na zmianę stanu sesji (np. kliknięcie przycisku Logout w profilu)
     LaunchedEffect(sessionState) {
         if (sessionState == null) {
-            // Jeśli użytkownik się wylogował, czyścimy stos i wracamy do logowania
+            // Jeśli użytkownik się wylogował, czyścimy cały stos ekranów i wracamy do autoryzacji
             navController.navigate("auth") {
                 popUpTo(0)
             }
@@ -42,18 +54,18 @@ fun AppRoot(app: RgsApplication) {
             }
         }
         else -> {
-            // Definiujemy drzewo nawigacji
+            // Definiujemy kompletne drzewo nawigacji aplikacji
             NavHost(
                 navController = navController,
-                // Jeśli sessionState jest null, startujemy od logowania, inaczej od menu
+                // Automatycznie dobieramy ekran startowy na podstawie obecności aktywnej sesji
                 startDestination = if (sessionState == null) "auth" else "main_menu"
             ) {
-                // Ekran Logowania
+                // Ekran Logowania i Rejestracji
                 composable("auth") {
                     AuthScreen(app = app)
                 }
 
-                // Ekran Menu Głównego
+                // Ekran Menu Głównego (VIP Lounge)
                 composable("main_menu") {
                     val userId = sessionState ?: return@composable
                     MainMenuScreen(
@@ -65,7 +77,7 @@ fun AppRoot(app: RgsApplication) {
                     )
                 }
 
-                // TWÓJ MODUŁ: Ekran Blackjacka
+                // Moduł gry: Ekran Blackjacka (Kasyno)
                 composable("blackjack") {
                     BlackjackScreen(
                         onNavigateBack = {
@@ -78,4 +90,5 @@ fun AppRoot(app: RgsApplication) {
     }
 }
 
+// Kompilator traktuje const val optymalniej przy sprawdzaniu sentinelów w Compose
 private const val LOADING_SENTINEL: Int = Int.MIN_VALUE
