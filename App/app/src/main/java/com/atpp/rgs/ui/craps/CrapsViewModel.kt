@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.atpp.rgs.ui.misc.THEME_REGISTRY
+import com.atpp.rgs.ui.misc.TableTheme
 
 // ─── Fazy gry ────────────────────────────────────────────────────────────────
 

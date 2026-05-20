@@ -1,45 +1,260 @@
 package com.atpp.rgs.ui.shop
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.filled.MonetizationOn
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.atpp.rgs.RgsApplication
+import com.atpp.rgs.ui.blackjack.formatFullCurrency
 import com.atpp.rgs.ui.theme.BrandBlack
 import com.atpp.rgs.ui.theme.BrandGold
-import com.atpp.rgs.ui.theme.BrandTextMuted
-import com.atpp.rgs.ui.theme.BrandWhite
+import com.atpp.rgs.ui.theme.BrandRed
+import com.atpp.rgs.ui.theme.BrandRedDark
+import java.util.Locale
+
+val ShopSurface = Color(0xFF1E1A1A)
+val ShopGold = Color(0xFFD4AF37)
+val ShopGoldMuted = Color(0xFF9E7E38)
+val ShopTextLight = Color(0xFFE0E0E0)
+val ShopTextMuted = Color(0xFF888888)
 
 @Composable
-fun ShopScreen(modifier: Modifier = Modifier) {
+fun ShopScreen(
+    app: RgsApplication,
+    userId: Int,
+    modifier: Modifier = Modifier,
+    viewModel: ShopViewModel = viewModel(factory = ShopViewModel.factory(app, userId))
+) {
+    val balance by viewModel.balance.collectAsState()
+    val ownedItems by viewModel.ownedItems.collectAsState()
+    val equippedItems by viewModel.equippedItems.collectAsState()
+
+    // Stan wybranej kategorii (domyślnie BJ_TABLE, bo usunęliśmy ALL)
+    var selectedCategory by remember { mutableStateOf(ItemCategory.BJ_TABLE) }
+
+    val bgGradient = Brush.verticalGradient(
+        0.00f to BrandBlack,
+        0.28f to BrandRedDark,
+        0.50f to BrandRed,
+        0.72f to BrandRedDark,
+        1.00f to BrandBlack
+    )
+
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(BrandBlack),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = modifier.fillMaxSize()
     ) {
-        Icon(
-            imageVector = Icons.Filled.ShoppingCart,
-            contentDescription = null,
-            tint = BrandGold,
-            modifier = Modifier.size(56.dp)
+        // --- UJEDNOLICONY GÓRNY PASEK ---
+        ShopTopBar(balance = balance)
+
+        // --- ZŁOTY SEPARATOR ---
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(BrandGold)
         )
-        Spacer(Modifier.height(16.dp))
-        Text(text = "Shop", color = BrandWhite, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(8.dp))
-        Text(text = "TBD", color = BrandTextMuted, fontSize = 14.sp)
+
+        // --- PILLE FILTROWANIA (Teraz wyśrodkowane i piękniejsze) ---
+        // Dodany Box, aby oddzielić pille od gradientu poniżej
+        Box(modifier = Modifier.fillMaxWidth().background(BrandBlack)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 18.dp, horizontal = 16.dp),
+                horizontalArrangement = Arrangement.Center, // Wyśrodkowanie
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CategoryPill("BJ TABLES", selectedCategory == ItemCategory.BJ_TABLE) { selectedCategory = ItemCategory.BJ_TABLE }
+                Spacer(Modifier.width(8.dp))
+                CategoryPill("DECKS", selectedCategory == ItemCategory.BJ_DECK) { selectedCategory = ItemCategory.BJ_DECK }
+                Spacer(Modifier.width(8.dp))
+                CategoryPill("CRAPS", selectedCategory == ItemCategory.CRAPS_TABLE) { selectedCategory = ItemCategory.CRAPS_TABLE }
+                Spacer(Modifier.width(8.dp))
+                CategoryPill("DICE", selectedCategory == ItemCategory.CRAPS_DICE) { selectedCategory = ItemCategory.CRAPS_DICE }
+            }
+        }
+
+        // --- GŁÓWNA ZAWARTOŚĆ Z GRADIENTEM ---
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .background(bgGradient)
+        ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                // Padding identyczny jak w liście gier
+                contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp)
+            ) {
+                // NAGŁÓWKI USUNIĘTE
+
+                val displayItems = SHOP_CATALOG.filter { it.category == selectedCategory }
+                items(displayItems) { item ->
+                    val isOwned = ownedItems.contains(item.id)
+                    val isEquipped = equippedItems[item.category.name] == item.id
+                    val canAfford = balance >= item.price
+
+                    ShopItemCard(
+                        item = item,
+                        isOwned = isOwned,
+                        isEquipped = isEquipped,
+                        canAfford = canAfford,
+                        onBuyClick = { viewModel.buyItem(item) },
+                        onEquipClick = { viewModel.equipItem(item) },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Funkcja pomocnicza dla Pilli (Upiększona)
+// ─────────────────────────────────────────────────────────────
+@Composable
+fun CategoryPill(text: String, isSelected: Boolean, onClick: () -> Unit) {
+    // Dynamiczny border: ciągły dla premium, subtelny dla nieaktywnego
+    val borderColor = if (isSelected) BrandGold else ShopTextMuted.copy(alpha = 0.3f)
+
+    Surface(
+        color = if (isSelected) BrandGold else Color.Transparent,
+        shape = RoundedCornerShape(50),
+        border = androidx.compose.foundation.BorderStroke(1.dp, borderColor),
+        // Dodałem subtelną elewację dla wybranego pilla (upiększenie)
+        shadowElevation = if (isSelected) 4.dp else 0.dp,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50)) // Ripple effect wewnątrz kształtu
+            .clickable { onClick() }
+    ) {
+        Text(
+            text = text,
+            // Nieaktywny tekst jest subtelniejszy (upiększenie)
+            color = if (isSelected) Color.Black else ShopTextLight.copy(alpha = 0.8f),
+            fontSize = 11.sp, // Mniejsza czcionka dla elegancji
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp, // Większe odstępy między literami
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Ujednolicony pasek portfela (Klon z MainMenu)
+// ─────────────────────────────────────────────────────────────
+@Composable
+private fun ShopTopBar(balance: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(BrandBlack)
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(Modifier.weight(1f))
+
+        Icon(
+            imageVector        = Icons.Filled.MonetizationOn,
+            contentDescription = "Coins",
+            tint               = BrandGold,
+            modifier           = Modifier.size(22.dp)
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text         = String.format(Locale.US, "%,d", balance),
+            color        = BrandGold,
+            fontSize     = 18.sp,
+            fontWeight   = FontWeight.Bold,
+            letterSpacing = 0.5.sp
+        )
+    }
+}
+
+@Composable
+fun ShopItemCard(
+    item: ShopItem,
+    isOwned: Boolean,
+    isEquipped: Boolean,
+    canAfford: Boolean,
+    onBuyClick: () -> Unit,
+    onEquipClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = ShopSurface),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column {
+            // Zdjęcie produktu
+            Image(
+                painter = painterResource(id = item.storeImageResId),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp)
+            )
+
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = item.name, color = ShopTextLight, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(text = item.description, color = ShopTextMuted, fontSize = 11.sp, letterSpacing = 1.sp, modifier = Modifier.padding(bottom = 16.dp))
+
+                // Przycisk akcji
+                if (isEquipped) {
+                    Button(
+                        onClick = { },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2A2A2A)),
+                        enabled = false
+                    ) {
+                        Text("EQUIPPED", color = ShopGoldMuted, fontWeight = FontWeight.Bold)
+                    }
+                } else if (isOwned) {
+                    Button(
+                        onClick = onEquipClick,
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        // ZMIANA: Czarne tło przycisku dla lepszego kontrastu i podkreślenia
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandBlack),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, BrandGold)
+                    ) {
+                        Text("EQUIP", color = BrandGold, fontWeight = FontWeight.Bold)
+                    }
+                } else {
+                    Button(
+                        onClick = onBuyClick,
+                        // ...
+                        enabled = canAfford,
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = BrandGold,
+                            contentColor = Color.Black,
+                            disabledContainerColor = ShopGoldMuted.copy(alpha = 0.3f),
+                            disabledContentColor = Color.Black.copy(alpha = 0.5f)
+                        )
+                    ) {
+                        Text("$${formatFullCurrency(item.price.toDouble())}", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
     }
 }

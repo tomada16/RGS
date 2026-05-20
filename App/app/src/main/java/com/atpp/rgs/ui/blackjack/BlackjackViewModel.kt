@@ -1,5 +1,6 @@
 package com.atpp.rgs.ui.blackjack
 
+import kotlinx.coroutines.flow.firstOrNull
 import androidx.lifecycle.ViewModel
 import com.atpp.rgs.model.Card
 import com.atpp.rgs.model.Rank
@@ -11,13 +12,53 @@ import kotlinx.coroutines.flow.asStateFlow
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.atpp.rgs.RgsApplication
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.atpp.rgs.ui.misc.THEME_REGISTRY
+import com.atpp.rgs.ui.misc.TableTheme
+import com.atpp.rgs.ui.shop.ItemCategory
+import com.atpp.rgs.ui.shop.SHOP_CATALOG
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+
 
 enum class GameState {
     NOT_STARTED, DEALING, ACTIVE, DEALER_TURN, PLAYER_WON, DEALER_WON, TIE, PLAYER_BUSTED
 }
-class BlackjackViewModel : ViewModel() {
+class BlackjackViewModel(
+    private val app: RgsApplication,
+    private val userId: Int
+) : ViewModel() {
+    private val walletDao = app.database.walletDao()
+    private val shopDao = app.database.shopDao() // Upewnij się, że masz instancję DAO
 
-    // --- STAN GRY (Dane dla interfejsu) ---
+    // --- DYNAMICZNY SILNIK MOTYWÓW ---
+    val currentTheme: StateFlow<TableTheme> = shopDao.getEquippedItems(userId)
+        .map { equippedList ->
+            // 1. Szukamy w bazie, co gracz ma ubrane na stole BJ
+            val equippedTableId = equippedList.find { it.category == ItemCategory.BJ_TABLE.name }?.itemId
+
+            // 2. Szukamy w katalogu, jaki "assetPrefix" ma ten przedmiot
+            val prefix = SHOP_CATALOG.find { it.id == equippedTableId }?.assetPrefix ?: "emerald"
+
+            // 3. Wyciągamy kompletną paletę kolorów ze słownika
+            THEME_REGISTRY[prefix] ?: THEME_REGISTRY["emerald"]!!
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = THEME_REGISTRY["emerald"]!!
+        )
+
+    init {
+        viewModelScope.launch {
+            val wallet = walletDao.getWalletByUserId(userId).firstOrNull()
+            _balance.value = (wallet?.coins ?: 0).toDouble()
+        }
+    }
 
     private val _playerHands = MutableStateFlow<List<List<Card>>>(listOf(emptyList()))
     val playerHands: StateFlow<List<List<Card>>> = _playerHands.asStateFlow()
@@ -32,9 +73,8 @@ class BlackjackViewModel : ViewModel() {
     val gameState: StateFlow<GameState> = _gameState.asStateFlow()
 
     // --- EKONOMIA (Finanse gracza) ---
-    private val _balance = MutableStateFlow(14000250.0) // Zaczynamy z saldem z Twojej makiety
+    private val _balance = MutableStateFlow(0.0)
     val balance: StateFlow<Double> = _balance.asStateFlow()
-
     private val _currentBet = MutableStateFlow(0.0)
     val currentBet: StateFlow<Double> = _currentBet.asStateFlow()
 
@@ -70,14 +110,21 @@ class BlackjackViewModel : ViewModel() {
             if (actualAmount > 0) {
                 _balance.value -= actualAmount
                 _currentBet.value += actualAmount
+                // Zapisujemy stratę w bazie (minus)
+                viewModelScope.launch { walletDao.changeCoins(userId, -actualAmount.toInt()) }
             }
         }
     }
 
     fun clearBet() {
         if (_gameState.value == GameState.NOT_STARTED || _gameState.value != GameState.ACTIVE) {
-            _balance.value += _currentBet.value
-            _currentBet.value = 0.0
+            val betToClear = _currentBet.value
+            if (betToClear > 0) {
+                _balance.value += betToClear
+                _currentBet.value = 0.0
+                // Zwracamy kasę do bazy (plus)
+                viewModelScope.launch { walletDao.changeCoins(userId, betToClear.toInt()) }
+            }
         }
     }
 
@@ -118,15 +165,18 @@ class BlackjackViewModel : ViewModel() {
             _gameState.value = GameState.DEALING
             val currentBetVal = _currentBet.value
             val actualAmount = if (_balance.value >= currentBetVal) currentBetVal else _balance.value
-            _balance.value -= actualAmount
-            _currentBet.value += actualAmount
+            if (actualAmount > 0) {
+                _balance.value -= actualAmount
+                _currentBet.value += actualAmount
+                // Pobieramy dodatkowy zakład z bazy
+                viewModelScope.launch { walletDao.changeCoins(userId, -actualAmount.toInt()) }
+            }
 
             val newHand = _playerHands.value[0].toMutableList()
             newHand.add(drawCard())
             _playerHands.value = listOf(newHand)
 
             val score = calculateScore(newHand)
-            // Po Double Down ZAWSZE kończymy turę, nieważne jaki był wynik!
             if (score > 21) {
                 delay(200)
                 performStand()
@@ -200,6 +250,7 @@ class BlackjackViewModel : ViewModel() {
             payout(totalPayoutMultiplier)
         }
     }
+
     fun split() {
         if (_gameState.value != GameState.ACTIVE) return
 
@@ -212,12 +263,14 @@ class BlackjackViewModel : ViewModel() {
         if (_balance.value >= splitBetAmount) {
             _balance.value -= splitBetAmount
             _currentBet.value += splitBetAmount
+            // Pobieramy rozbity zakład z bazy
+            viewModelScope.launch { walletDao.changeCoins(userId, -splitBetAmount.toInt()) }
         } else {
             return
         }
 
         viewModelScope.launch {
-            _gameState.value = GameState.DEALING // Blokujemy interfejs
+            _gameState.value = GameState.DEALING
 
             // Faza 1: Rozdzielamy pierwszą rękę na dwie pojedyncze karty
             val hand1 = mutableListOf(firstHand[0])
@@ -310,7 +363,19 @@ class BlackjackViewModel : ViewModel() {
     }
 
     private fun payout(multiplier: Double) {
-        _balance.value += (_currentBet.value * multiplier)
+        val wonAmount = _currentBet.value * multiplier
+        _balance.value += wonAmount
         _currentBet.value = 0.0
+
+        if (wonAmount > 0) {
+            // Wygrywamy (lub mamy remis), wpłacamy profit do bazy
+            viewModelScope.launch { walletDao.changeCoins(userId, wonAmount.toInt()) }
+        }
+    }
+
+    companion object {
+        fun factory(app: RgsApplication, userId: Int): ViewModelProvider.Factory = viewModelFactory {
+            initializer { BlackjackViewModel(app, userId) }
+        }
     }
 }

@@ -93,7 +93,8 @@ fun MainMenuScreen(
     app: RgsApplication,
     userId: Int,
     viewModel: MainMenuViewModel = viewModel(factory = MainMenuViewModel.factory(app, userId)),
-    onNavigateToBlackjack: () -> Unit // ZACHOWANA TWOJA NAWIGACJA
+    onNavigateToBlackjack: () -> Unit,
+    onNavigateToCraps: () -> Unit
 ) {
     val games  by viewModel.games.collectAsState()
     val wallet by viewModel.wallet.collectAsState()
@@ -113,16 +114,17 @@ fun MainMenuScreen(
                 games      = games,
                 wallet     = wallet,
                 onJoinGame = { game ->
-                    // ZACHOWANA TWOJA LOGIKA KLIKNIĘCIA
                     when (game.name.lowercase(Locale.ROOT)) {
                         "blackjack" -> onNavigateToBlackjack()
-                        // "craps" -> onNavigateToCraps() // Miejsce na kolejne gry
+                        "craps" -> onNavigateToCraps()
                     }
                 },
                 modifier   = Modifier.padding(innerPadding)
             )
             MainTab.SHOP -> ShopScreen(
-                modifier = Modifier.padding(innerPadding)
+                app = app,
+                userId = userId,
+                modifier = Modifier.padding(innerPadding),
             )
             MainTab.SETTINGS -> SettingsScreen(
                 modifier = Modifier.padding(innerPadding)

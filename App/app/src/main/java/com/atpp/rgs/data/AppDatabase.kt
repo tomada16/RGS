@@ -15,9 +15,12 @@ import com.atpp.rgs.data.dao.*
         GameResultsEntity::class,
         GameSessionEntity::class,
         WalletEntity::class,
-        TransactionsEntity::class
+        TransactionsEntity::class,
+        // --- NOWE ENCJE SKLEPU ---
+        OwnedItemEntity::class,
+        EquippedItemEntity::class
     ],
-    version = 1,
+    version = 2, // <--- ZMIENIONE Z 1 NA 2!
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -30,24 +33,17 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun gameStatsDao(): GameStatsDao
     abstract fun transactionsDao(): TransactionsDao
 
+    // --- NOWE DAO SKLEPU ---
+    abstract fun shopDao(): ShopDao
+
     companion object {
-        /**
-         * Callback wywoływany raz przy pierwszym tworzeniu bazy danych.
-         * Wstawia predefiniowane gry za pomocą surowego SQL (synchronicznie,
-         */
         val seedCallback: Callback = object : Callback() {
 
-            /** Nowa instalacja — baza właśnie powstała, wstawiamy gry. */
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
                 insertSeedGames(db)
             }
 
-            /**
-             * Każde otwarcie bazy — wstawiamy gry tylko jeśli tabela jest pusta.
-             * Obsługuje przypadek gdy baza istniała przed dodaniem seedów
-             * (onCreate nie odpala się ponownie przy aktualizacji aplikacji).
-             */
             override fun onOpen(db: SupportSQLiteDatabase) {
                 super.onOpen(db)
                 val cursor = db.query("SELECT COUNT(*) FROM games")

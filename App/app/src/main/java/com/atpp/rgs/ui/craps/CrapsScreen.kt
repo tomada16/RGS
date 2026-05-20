@@ -6,19 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.* // Zawiera statusBarsPadding i navigationBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 
@@ -32,6 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface // DODANY IMPORT
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -109,8 +98,18 @@ fun CrapsScreen(
         // ── 2. Warstwy UI ─────────────────────────────────────────────────
         Column(modifier = Modifier.fillMaxSize()) {
 
-            // Górny pasek: saldo + przycisk wyjścia
-            CrapsTopBar(coins = state.walletCoins, onExit = onExit)
+            // Górny pasek: saldo + przycisk wyjścia (Z ODSTĘPAMI JAK W BLACKJACKU)
+            CrapsTopBar(
+                coins = state.walletCoins,
+                onExit = onExit,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 6.dp)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Historia rzutów (fixed height — nie rusza rozmiaru obszaru gry)
             RollHistoryBar(history = state.rollHistory)
@@ -149,11 +148,12 @@ fun CrapsScreen(
                 Spacer(Modifier.height(16.dp))
             }
 
-            // Dolna strefa kontrolna (żetony + pasek) — ciemniejsza od obszaru gry
+            // Dolna strefa kontrolna (żetony + pasek) — Z ODSTĘPAMI JAK W BLACKJACKU
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xBB000000))
+                    .navigationBarsPadding()
+                    .padding(bottom = 16.dp)
             ) {
                 ChipSelectorRow(
                     enabled     = state.phase == CrapsPhase.COME_OUT
@@ -191,51 +191,50 @@ fun CrapsScreen(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Górny pasek
+// Górny pasek - ZMODYFIKOWANY NA STYL BLACKJACKA
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun CrapsTopBar(coins: Int, onExit: () -> Unit) {
+private fun CrapsTopBar(coins: Int, onExit: () -> Unit, modifier: Modifier = Modifier) {
     Row(
-        modifier          = Modifier
-            .fillMaxWidth()
-            .background(Color(0xBB000000))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier          = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Portfel (lewa strona)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector        = Icons.Filled.MonetizationOn,
-                contentDescription = stringResource(R.string.craps_cd_balance),
-                tint               = BrandGold,
-                modifier           = Modifier.size(20.dp)
-            )
-            Spacer(Modifier.width(6.dp))
-            Text(
-                text       = formatCoins(coins),
-                color      = BrandGold,
-                fontWeight = FontWeight.Bold,
-                fontSize   = 18.sp
-            )
+        Surface(color = Color.Black.copy(alpha = 0.5f), shape = RoundedCornerShape(50)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Icon(
+                    imageVector        = Icons.Filled.MonetizationOn,
+                    contentDescription = stringResource(R.string.craps_cd_balance),
+                    tint               = BrandGold,
+                    modifier           = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text       = formatCoins(coins),
+                    color      = BrandGold,
+                    fontWeight = FontWeight.Bold,
+                    fontSize   = 16.sp
+                )
+            }
         }
 
-        Spacer(Modifier.weight(1f))
-
-        // Przycisk wyjścia X (prawa strona)
+        // Przycisk wyjścia X (Skopiowany w 100% ze stołu Blackjacka)
         Box(
             modifier         = Modifier
                 .size(36.dp)
-                .clip(CircleShape)
-                .background(Color(0xFF2E2E2E))
+                .background(Color.Black.copy(alpha = 0.5f), CircleShape)
                 .clickable { onExit() },
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector        = Icons.Filled.Close,
-                contentDescription = stringResource(R.string.craps_cd_exit),
-                tint               = BrandWhite,
-                modifier           = Modifier.size(20.dp)
+                imageVector = Icons.Filled.Close,
+                contentDescription = null,
+                tint               = Color.White
             )
         }
     }
@@ -535,14 +534,29 @@ private fun ChipStackPreview(chipHistory: List<Int>) {
 // Wybór żetonów
 // ─────────────────────────────────────────────────────────────────────────────
 
-private data class ChipDef(val value: Int, val base: Color, val highlight: Color)
+// ─────────────────────────────────────────────────────────────────────────────
+// Wybór żetonów (DYNAMICZNE Z BLACKJACKA)
+// ─────────────────────────────────────────────────────────────────────────────
 
-private val CHIP_DEFS = listOf(
-    ChipDef(1,   Color(0xFFB8860B), Color(0xFFFFD700)),
-    ChipDef(5,   Color(0xFF992222), Color(0xFFFF5555)),
-    ChipDef(25,  Color(0xFF2A2A2A), Color(0xFF555555)),
-    ChipDef(100, Color(0xFFBB7799), Color(0xFFFFBBDD))
+val CRAPS_CHIP_VALUES = listOf(
+    10, 50, 100, 500,
+    1_000, 5_000, 10_000, 50_000,
+    100_000, 500_000, 1_000_000, 5_000_000,
+    10_000_000, 50_000_000, 100_000_000, 500_000_000, 1_000_000_000
 )
+
+fun getDynamicChipsCraps(balance: Int): List<Int> {
+    return CRAPS_CHIP_VALUES.filter { it <= maxOf(balance, 10) }.takeLast(5)
+}
+
+fun formatChipCraps(value: Int): String {
+    return when {
+        value >= 1_000_000_000 -> "${(value / 1_000_000_000)}B"
+        value >= 1_000_000 -> "${(value / 1_000_000)}M"
+        value >= 1_000 -> "${(value / 1_000)}k"
+        else -> value.toString()
+    }
+}
 
 @Composable
 private fun ChipSelectorRow(
@@ -551,6 +565,8 @@ private fun ChipSelectorRow(
     currentBet: Int,
     onChipClick: (Int) -> Unit
 ) {
+    val availableChips = getDynamicChipsCraps(walletCoins)
+
     Row(
         modifier              = Modifier
             .fillMaxWidth()
@@ -558,29 +574,33 @@ private fun ChipSelectorRow(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment     = Alignment.CenterVertically
     ) {
-        CHIP_DEFS.forEach { chip ->
-            val chipEnabled = enabled && (currentBet + chip.value) <= walletCoins
+        availableChips.forEach { chipValue ->
+            val chipEnabled = enabled && (currentBet + chipValue) <= walletCoins
             CasinoChip(
-                def     = chip,
+                value   = chipValue,
                 enabled = chipEnabled,
-                onClick = { onChipClick(chip.value) }
+                onClick = { onChipClick(chipValue) }
             )
         }
     }
 }
 
 @Composable
-private fun CasinoChip(def: ChipDef, enabled: Boolean, onClick: () -> Unit) {
+private fun CasinoChip(value: Int, enabled: Boolean, onClick: () -> Unit) {
     val alpha = if (enabled) 1f else 0.35f
+
+    val baseColor = chipColor(value)
+    val highlightColor = chipHighlightColor(value)
+
     Box(
         modifier         = Modifier
-            .size(58.dp)
+            .size(54.dp) // Zmniejszone, żeby 5 nominałów weszło w rząd bez ścisku
             .clip(CircleShape)
             .background(
                 Brush.radialGradient(
                     colors = listOf(
-                        def.highlight.copy(alpha = alpha),
-                        def.base.copy(alpha = alpha)
+                        highlightColor.copy(alpha = alpha),
+                        baseColor.copy(alpha = alpha)
                     )
                 )
             )
@@ -589,20 +609,32 @@ private fun CasinoChip(def: ChipDef, enabled: Boolean, onClick: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text       = "${def.value}",
+            text       = formatChipCraps(value),
             color      = Color.White.copy(alpha = alpha),
             fontWeight = FontWeight.ExtraBold,
-            fontSize   = 15.sp
+            fontSize   = 13.sp
         )
     }
 }
 
-/** Kolor żetonu w miniaturowym podglądzie. */
+/** Kolor bazowy żetonu */
 private fun chipColor(amount: Int): Color = when {
-    amount >= 100 -> Color(0xFFBB7799)
-    amount >= 25  -> Color(0xFF444444)
-    amount >= 5   -> Color(0xFF992222)
-    else          -> Color(0xFFB8860B)
+    amount >= 1_000_000 -> Color(0xFF2A2A2A) // Miliony - czarne
+    amount >= 1_000 -> Color(0xFFBB7799)     // Tysiące - różowe
+    amount >= 100 -> Color(0xFF444444)       // Setki - ciemnoszare
+    amount >= 25  -> Color(0xFF235A23)       // Zielone
+    amount >= 5   -> Color(0xFF992222)       // Czerwone
+    else          -> Color(0xFFB8860B)       // Złote
+}
+
+/** Kolor rozbłysku (środek gradientu w żetonie) */
+private fun chipHighlightColor(amount: Int): Color = when {
+    amount >= 1_000_000 -> Color(0xFF555555)
+    amount >= 1_000 -> Color(0xFFFFBBDD)
+    amount >= 100 -> Color(0xFF777777)
+    amount >= 25  -> Color(0xFF449944)
+    amount >= 5   -> Color(0xFFFF5555)
+    else          -> Color(0xFFFFD700)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -810,7 +842,6 @@ private fun RoundResultOverlay(
 // Pomocnicze
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Ciemny czerwony — kolor tła całego ekranu Craps (pasek górny, dolny, odstępy). */
 private val CrapsBg = Color(0xFF1A0000)
 
 private fun formatCoins(coins: Int): String =
