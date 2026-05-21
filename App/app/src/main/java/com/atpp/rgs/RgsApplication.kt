@@ -15,6 +15,7 @@ class RgsApplication : Application() {
 
     val database: AppDatabase by lazy {
         Room.databaseBuilder(this, AppDatabase::class.java, "rgs.db")
+            .addMigrations(AppDatabase.MIGRATION_1_2)
             .addCallback(AppDatabase.seedCallback)
             .build()
     }

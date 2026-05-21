@@ -3,6 +3,7 @@ package com.atpp.rgs.data
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.atpp.rgs.data.entity.*
 import com.atpp.rgs.data.dao.*
@@ -58,6 +59,21 @@ abstract class AppDatabase : RoomDatabase() {
                         arrayOf(name, description)
                     )
                 }
+            }
+        }
+
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `owned_items` " +
+                    "(`userId` INTEGER NOT NULL, `itemId` TEXT NOT NULL, " +
+                    "PRIMARY KEY(`userId`, `itemId`))"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `equipped_items` " +
+                    "(`userId` INTEGER NOT NULL, `category` TEXT NOT NULL, `itemId` TEXT NOT NULL, " +
+                    "PRIMARY KEY(`userId`, `category`))"
+                )
             }
         }
 
