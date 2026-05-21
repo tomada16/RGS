@@ -12,28 +12,50 @@ data class TableTheme(
 )
 
 val THEME_REGISTRY = mapOf(
+    // 1. EMERALD (Klasyk) -> Akcenty: Antyczny Mosiądz
     "emerald" to TableTheme(
-        bgResId = R.drawable.bj_table_bg, // Upewnij się, że ta nazwa to Twój plik tła
-        brandGold = Color(0xFFB8860B),
-        brandGoldLight = Color(0xFFFFE066),
-        buttonDark = Color(0xFF333333),
-        buttonStay = Color(0xFF5C0000)
+        bgResId = R.drawable.bj_table_bg, // upewnij się, że nazwa pasuje do Twoich plików
+        brandGold = Color(0xFFB89947),      // Ciepły, stonowany mosiądz
+        brandGoldLight = Color(0xFFD4BB7E), // Jasny refleks mosiądzu
+        buttonDark = Color(0xFF1A241A),     // Bardzo głęboka, ciemna zieleń (prawie czarna)
+        buttonStay = Color(0xFF2E4C2E)      // Klasyczna zieleń leśna
     ),
 
+    // 2. BURGUNDY (High Stakes) -> Akcenty: Szampańskie Złoto (Elegancja)
     "burgundy" to TableTheme(
         bgResId = R.drawable.burgundy_bj_table_bg,
-        brandGold = Color(0xFFC0C0C0), // Np. Srebro dla stołu Burgundy!
-        brandGoldLight = Color(0xFFFFFFFF),
-        buttonDark = Color(0xFF221111),
-        buttonStay = Color(0xFF8B0000)
+        brandGold = Color(0xFFE2C29B),      // Delikatne, luksusowe szampańskie złoto
+        brandGoldLight = Color(0xFFFFF5E6), // Prawie biały, bardzo jasny szampan do rozbłysków
+        buttonDark = Color(0xFF241114),     // Ekstremalnie ciemny mahoń
+        buttonStay = Color(0xFF5C1D24)      // Bogate, ciemne wino / bordo
     ),
 
+    // 3. MIDNIGHT (Private Lounge) -> Akcenty: Księżycowe Srebro
     "midnight" to TableTheme(
-        bgResId = R.drawable.midnight_bj_table_bg, // To jest ciemnoniebieski stół z gradientem
-        brandGold = Color(0xFFA67C52),      // Bogaty, szczotkowany mosiądz dla głównych akcentów i tekstu
-        brandGoldLight = Color(0xFFCDB79E), // Jaśniejszy mosiądz do cieniowania i podświetleń
-        buttonDark = Color(0xFF101015),    // Głęboki, węglowy granat dla ciemnych tła przycisków
-        buttonStay = Color(0xFF1B4D3E)     // Bogata, nasycona zieleń leśna dla przycisku "Stay"
+        bgResId = R.drawable.midnight_bj_table_bg,
+        brandGold = Color(0xFFE0E6ED),      // Chłodne, księżycowe srebro / platyna
+        brandGoldLight = Color(0xFFFFFFFF), // Czysta biel
+        buttonDark = Color(0xFF151522),     // Bardzo ciemny granat (Nocne niebo)
+        buttonStay = Color(0xFF2B3B5A)      // Stalowy, chłodny błękit
+    ),
+
+    // 4. FIRE AND ICE -> Akcenty: Różowe Złoto / Miedź
+    // (Ten gradient wymaga koloru, który zagra i z czerwienią na górze, i z fioletem na dole)
+    "fireice" to TableTheme(
+        bgResId = R.drawable.fireice_bj_table_bg,
+        brandGold = Color(0xFFE0A96D),      // Luksusowa miedź / Różowe złoto
+        brandGoldLight = Color(0xFFFFD3A3), // Jasna miedź
+        buttonDark = Color(0xFF251122),     // Ciemna śliwka / głęboki fiolet
+        buttonStay = Color(0xFF591C36)      // Zgaszony, purpurowy karmazyn
+    ),
+
+    // 5. ONYX (Ultimate VIP) -> Akcenty: Czyste 24-karatowe Złoto
+    // (Na tle głębokiej czerni najlepiej wygląda klasyczne, jaskrawe złoto kasynowe)
+    "onyx" to TableTheme(
+        bgResId = R.drawable.onyx_bj_table_bg,
+        brandGold = Color(0xFFD4AF37),      // Czyste, mocne złoto
+        brandGoldLight = Color(0xFFF9E596), // Jasnożółte złoto
+        buttonDark = Color(0xFF101010),     // Prawie czysty czarny
+        buttonStay = Color(0xFF2A2A2A)      // Ciemny grafit, ekstremalnie minimalistyczny
     )
-    // Tu będziesz w przyszłości dopisywał kolejne motywy!
 )

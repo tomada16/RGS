@@ -32,12 +32,20 @@ data class ShopItem(
 // Globalny katalog produktów z ZESTAWEM STARTOWYM
 val SHOP_CATALOG = listOf(
     // STOŁY
-    ShopItem("bj_table_emerald", ItemCategory.BJ_TABLE, "Emerald Felt", "CLASSIC CASINO", 50_000, "emerald", R.drawable.bj_table_bg),
-    ShopItem("bj_table_burgundy", ItemCategory.BJ_TABLE, "Royal Burgundy", "HIGH STAKES", 10, "burgundy", R.drawable.burgundy_bj_table_bg),
-    ShopItem("bj_table_midnight", ItemCategory.BJ_TABLE, "Midnight Velvet", "PRIVATE LOUNGE", 250, "midnight", R.drawable.midnight_bj_table_bg),
+    ShopItem("bj_table_emerald", ItemCategory.BJ_TABLE, "Emerald Felt", "CLASSIC CASINO", 0, "emerald", R.drawable.emerald_shop_bg),
+    ShopItem("bj_table_burgundy", ItemCategory.BJ_TABLE, "Royal Burgundy", "HIGH STAKES", 10, "burgundy", R.drawable.burgundy_shop_bg),
+    ShopItem("bj_table_midnight", ItemCategory.BJ_TABLE, "Midnight Velvet", "PRIVATE LOUNGE", 250, "midnight", R.drawable.midnight_shop_bg),
+    ShopItem("bj_table_fireice", ItemCategory.BJ_TABLE, "Fire and Ice", "ELEMENTAL FURY", 250, "fireice", R.drawable.fireice_shop_bg),
+    ShopItem("bj_table_onyx", ItemCategory.BJ_TABLE, "Onyx", "ARABIAN NIGHTS", 250, "onyx", R.drawable.onyx_shop_bg),
+
 
     // KARTY (Domyślna talia dodana do katalogu, w cenie 0, bo i tak dajesz to za darmo)
-    ShopItem("bj_deck_classic", ItemCategory.BJ_DECK, "Classic Standard", "TRADITIONAL DECK", 0, "classic", R.drawable.card_spadesace) // Zmień R.drawable na podgląd rewersu!
+    ShopItem("bj_deck_classic", ItemCategory.BJ_DECK, "Classic Standard", "TRADITIONAL DECK", 0, "classic", R.drawable.classic_shop_bg), // Zmień R.drawable na podgląd rewersu!
+    // 2. Atlasnye (Rosyjski styl z XIX w.)
+    ShopItem("bj_deck_atlasnye", ItemCategory.BJ_DECK, "Imperial Atlasnye", "TSAR'S COLLECTION", 75, "atlasnye", R.drawable.atlasnye_shop_bg), // Zmień na obrazek pokazowy tej talii
+
+    // 3. Bresciane (Włoski styl regionalny)
+    ShopItem("bj_deck_bresciane", ItemCategory.BJ_DECK, "Bresciane Heritage", "ITALIAN ELEGANCE", 150, "bresciane", R.drawable.bresciane_shop_bg)
 )
 
 class ShopViewModel(

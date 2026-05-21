@@ -97,7 +97,7 @@ fun BlackjackScreen(
 
     // POBIERANIE MOTYWU Z VIEWMODELU
     val theme by viewModel.currentTheme.collectAsState()
-
+    val deckPrefix by viewModel.currentDeckPrefix.collectAsState()
     var showOverlay by remember { mutableStateOf(false) }
     var showBettingUI by remember { mutableStateOf(true) }
 
@@ -142,8 +142,9 @@ fun BlackjackScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 6.dp)
+                    // WCIĘCIE DO ŚRODKA OBRAMOWANIA STOŁU
+                    .padding(horizontal = 32.dp)
+                    .padding(top = 6.dp) // Lekko w dół, żeby uciec z górnego zaokrąglenia
             )
 
             // --- NOWY STABILNY KONTENER NA STÓŁ ---
@@ -160,7 +161,7 @@ fun BlackjackScreen(
                         .padding(top = 94.dp), // Stały odstęp od górnego paska
                     contentAlignment = Alignment.TopCenter
                 ) {
-                    DealerArea(dealerHand, gameState, theme)
+                    DealerArea(dealerHand, gameState, theme, deckPrefix)
                 }
 
                 // GRACZ: Przyklejony do dołu. Porusza się gładko razem z dolnym menu.
@@ -171,7 +172,7 @@ fun BlackjackScreen(
                         .padding(bottom = 46.dp), // Odstęp od dolnych kontrolek
                     contentAlignment = Alignment.BottomCenter
                 ) {
-                    PlayerArea(playerHands, activeHandIndex, theme)
+                    PlayerArea(playerHands, activeHandIndex, theme, deckPrefix)
                 }
             }
 
@@ -186,7 +187,9 @@ fun BlackjackScreen(
                 theme = theme,
                 modifier = Modifier
                     .navigationBarsPadding()
-                    .padding(bottom = 32.dp)
+                    // WCIĘCIE DO ŚRODKA OBRAMOWANIA STOŁU
+                    .padding(horizontal = 32.dp)
+                    .padding(bottom = 36.dp) // Lekko wyżej od dolnej krawędzi
             )
         }
 
@@ -236,8 +239,10 @@ fun BottomControls(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                    // Usunięto horizontal padding, zostawiamy tylko pionowy
+                    .padding(vertical = 6.dp),
+                // Zmieniono na SpaceBetween, by żetony rozłożyły się idealnie od krawędzi do krawędzi
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 availableChips.forEach { chipValue ->
@@ -255,9 +260,8 @@ fun BottomControls(
         Spacer(modifier = Modifier.height(10.dp))
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
+            // Usunięto padding(horizontal = 8.dp)
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             this@Row.AnimatedVisibility(
@@ -568,7 +572,7 @@ fun WinLossOverlay(gameState: GameState, theme: TableTheme) {
 }
 
 @Composable
-fun PlayerArea(hands: List<List<Card>>, activeHandIndex: Int, theme: TableTheme) {
+fun PlayerArea(hands: List<List<Card>>, activeHandIndex: Int, theme: TableTheme, deckPrefix: String) {
     val maxCards = hands.maxOfOrNull { it.size } ?: 1
     val scale = if (hands.size > 1) (0.85f - (maxCards - 2) * 0.05f).coerceAtLeast(0.65f) else 1f
     val handSpacing = if (maxCards > 3) (-20).dp else 16.dp
@@ -619,7 +623,9 @@ fun PlayerArea(hands: List<List<Card>>, activeHandIndex: Int, theme: TableTheme)
                                         enter = slideInVertically(initialOffsetY = { -1500 }, animationSpec = tween(500)) + fadeIn(),
                                         modifier = Modifier.offset(x = animatedX.dp).rotate(animatedRotation)
                                     ) {
-                                        CardPlaceholder(card.imageName)
+                                        // TUTAJ DODAŁEM PREFIKS DLA GRACZA
+                                        val imageName = "${deckPrefix}_${card.imageName}"
+                                        CardPlaceholder(imageName)
                                     }
                                 }
                             }
@@ -632,7 +638,7 @@ fun PlayerArea(hands: List<List<Card>>, activeHandIndex: Int, theme: TableTheme)
 }
 
 @Composable
-fun DealerArea(hand: List<Card>, gameState: GameState, theme: TableTheme) {
+fun DealerArea(hand: List<Card>, gameState: GameState, theme: TableTheme, deckPrefix: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -647,7 +653,10 @@ fun DealerArea(hand: List<Card>, gameState: GameState, theme: TableTheme) {
 
                     val isHidden = (gameState == GameState.DEALING || gameState == GameState.ACTIVE) && index == 1
                     val flipRotation by animateFloatAsState(targetValue = if (isHidden) 180f else 0f, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "")
-                    val imageName = if (flipRotation > 90f) "card_back" else card.imageName
+
+                    // TUTAJ DODAŁEM PREFIKS DLA KRUPIERA (zarówno dla rewersu jak i awersu)
+                    val rawImageName = if (flipRotation > 90f) "card_back" else card.imageName
+                    val imageName = "${deckPrefix}_${rawImageName}"
 
                     this@Column.AnimatedVisibility(
                         visible = isVisible,
@@ -686,15 +695,28 @@ fun DealerArea(hand: List<Card>, gameState: GameState, theme: TableTheme) {
 @Composable
 fun CardPlaceholder(imageName: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val drawableId = remember(imageName) { context.resources.getIdentifier(imageName, "drawable", context.packageName) }
+    val drawableId = remember(imageName) {
+        context.resources.getIdentifier(imageName, "drawable", context.packageName)
+    }
 
     Surface(
-        modifier = modifier.size(width = 100.dp, height = 140.dp),
+        // WYMUSZAMY IDEALNY KASYNOWY WYMIAR DLA KAŻDEJ KARTY, NIEWAŻNE JAKI BYŁ XML
+        modifier = modifier.size(width = 85.dp, height = 125.dp),
         color = Color.Transparent,
         shadowElevation = 8.dp
     ) {
-        if (drawableId != 0) Image(painter = painterResource(id = drawableId), contentDescription = null, contentScale = ContentScale.Fit)
-        else Box(modifier = Modifier.fillMaxSize().background(Color.Red))
+        if (drawableId != 0) {
+            Image(
+                painter = painterResource(id = drawableId),
+                contentDescription = null,
+                // TO JEST WAŻNE: Wypełnia cały nasz kwadrat 85x125 rozciągając lub ściskając wektor XML
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            // Placeholder błędu na wypadek literówki
+            Box(modifier = Modifier.fillMaxSize().background(Color.Red))
+        }
     }
 }
 

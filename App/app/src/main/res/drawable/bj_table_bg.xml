@@ -49,7 +49,7 @@
           android:strokeAlpha="0.3"
           android:strokeWidth="8"
           android:fillColor="#00000000"
-          android:strokeColor="#2A1A0A"
+          android:strokeColor="#B1A685"
           android:fillAlpha="0.3"/>
       <path
           android:pathData="M0,713h412v221h-412z">

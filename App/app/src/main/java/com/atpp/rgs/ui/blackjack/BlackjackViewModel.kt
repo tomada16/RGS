@@ -53,6 +53,20 @@ class BlackjackViewModel(
             initialValue = THEME_REGISTRY["emerald"]!!
         )
 
+    val currentDeckPrefix: StateFlow<String> = shopDao.getEquippedItems(userId)
+        .map { equippedList ->
+            // 1. Czego używamy jako kart?
+            val equippedDeckId = equippedList.find { it.category == ItemCategory.BJ_DECK.name }?.itemId
+
+            // 2. Szukamy w sklepie prefixu. Jeśli nie znajdzie (bug) - zwracamy "classic"
+            SHOP_CATALOG.find { it.id == equippedDeckId }?.assetPrefix ?: "classic"
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = "classic"
+        )
+
     init {
         viewModelScope.launch {
             val wallet = walletDao.getWalletByUserId(userId).firstOrNull()
