@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -47,6 +48,7 @@ import androidx.compose.ui.draw.scale
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.MonetizationOn
 import com.atpp.rgs.RgsApplication
+import com.atpp.rgs.data.repository.UserRepository
 import com.atpp.rgs.ui.misc.TableTheme
 
 // Uniwersalny, biały przycisk (nie zależy od motywu stołu)
@@ -88,15 +90,33 @@ fun BlackjackScreen(
     onNavigateBack: () -> Unit,
     viewModel: BlackjackViewModel = viewModel(factory = BlackjackViewModel.factory(app, userId))
 ) {
-    val playerHands by viewModel.playerHands.collectAsState()
+    val playerHands     by viewModel.playerHands.collectAsState()
     val activeHandIndex by viewModel.currentHandIndex.collectAsState()
-    val dealerHand by viewModel.dealerHand.collectAsState()
-    val gameState by viewModel.gameState.collectAsState()
-    val balance by viewModel.balance.collectAsState()
-    val currentBet by viewModel.currentBet.collectAsState()
+    val dealerHand      by viewModel.dealerHand.collectAsState()
+    val gameState       by viewModel.gameState.collectAsState()
+    val balance         by viewModel.balance.collectAsState()
+    val currentBet      by viewModel.currentBet.collectAsState()
+    val pityGranted     by viewModel.pityGranted.collectAsState()
 
     // POBIERANIE MOTYWU Z VIEWMODELU
     val theme by viewModel.currentTheme.collectAsState()
+
+    if (pityGranted) {
+        AlertDialog(
+            onDismissRequest = viewModel::onPityDismissed,
+            title = { Text(stringResource(R.string.pity_dialog_title)) },
+            text  = {
+                Text(
+                    stringResource(R.string.pity_dialog_message, UserRepository.PITY_AMOUNT)
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::onPityDismissed) {
+                    Text(stringResource(R.string.pity_dialog_btn))
+                }
+            }
+        )
+    }
 
     var showOverlay by remember { mutableStateOf(false) }
     var showBettingUI by remember { mutableStateOf(true) }

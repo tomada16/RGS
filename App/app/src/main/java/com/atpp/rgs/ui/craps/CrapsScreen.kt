@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Undo
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -22,9 +23,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface // DODANY IMPORT
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.atpp.rgs.data.repository.UserRepository
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,7 +64,25 @@ fun CrapsScreen(
     onExit: () -> Unit,
     viewModel: CrapsViewModel = viewModel(factory = CrapsViewModel.factory(app, userId))
 ) {
-    val state by viewModel.state.collectAsState()
+    val state       by viewModel.state.collectAsState()
+    val pityGranted by viewModel.pityGranted.collectAsState()
+
+    if (pityGranted) {
+        AlertDialog(
+            onDismissRequest = viewModel::onPityDismissed,
+            title = { Text(stringResource(R.string.pity_dialog_title)) },
+            text  = {
+                Text(
+                    stringResource(R.string.pity_dialog_message, UserRepository.PITY_AMOUNT)
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::onPityDismissed) {
+                    Text(stringResource(R.string.pity_dialog_btn))
+                }
+            }
+        )
+    }
 
     // Obraz stołu z assets/images/games/crapsTable/craps_table_default.png
     val tableImage = MediaAssets.rememberAssetImage("games/crapsTable/craps_table_default.png")

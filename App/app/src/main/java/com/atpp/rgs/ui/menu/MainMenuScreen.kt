@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MonetizationOn
@@ -52,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.atpp.rgs.R
 import com.atpp.rgs.RgsApplication
+import com.atpp.rgs.data.repository.UserRepository
 import com.atpp.rgs.data.entity.GameEntity
 import com.atpp.rgs.data.entity.WalletEntity
 import com.atpp.rgs.ui.components.GradientButton
@@ -96,9 +99,30 @@ fun MainMenuScreen(
     onNavigateToBlackjack: () -> Unit,
     onNavigateToCraps: () -> Unit
 ) {
-    val games  by viewModel.games.collectAsState()
-    val wallet by viewModel.wallet.collectAsState()
+    val games      by viewModel.games.collectAsState()
+    val wallet     by viewModel.wallet.collectAsState()
+    val pityGranted by viewModel.pityGranted.collectAsState()
     var selectedTab by remember { mutableStateOf(MainTab.MENU) }
+
+    if (pityGranted) {
+        AlertDialog(
+            onDismissRequest = viewModel::onPityDismissed,
+            title = { Text(stringResource(R.string.pity_dialog_title)) },
+            text  = {
+                Text(
+                    stringResource(
+                        R.string.pity_dialog_message,
+                        UserRepository.PITY_AMOUNT
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::onPityDismissed) {
+                    Text(stringResource(R.string.pity_dialog_btn))
+                }
+            }
+        )
+    }
 
     Scaffold(
         containerColor = BrandBlack,

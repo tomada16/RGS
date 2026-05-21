@@ -16,6 +16,7 @@ import com.atpp.rgs.RgsApplication
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.atpp.rgs.data.repository.UserRepository
 import com.atpp.rgs.ui.misc.THEME_REGISTRY
 import com.atpp.rgs.ui.misc.TableTheme
 import com.atpp.rgs.ui.shop.ItemCategory
@@ -77,6 +78,11 @@ class BlackjackViewModel(
     val balance: StateFlow<Double> = _balance.asStateFlow()
     private val _currentBet = MutableStateFlow(0.0)
     val currentBet: StateFlow<Double> = _currentBet.asStateFlow()
+
+    private val _pityGranted = MutableStateFlow(false)
+    val pityGranted: StateFlow<Boolean> = _pityGranted.asStateFlow()
+
+    fun onPityDismissed() { _pityGranted.value = false }
 
     private var lastBetAmount = 0.0
 
@@ -367,9 +373,15 @@ class BlackjackViewModel(
         _balance.value += wonAmount
         _currentBet.value = 0.0
 
-        if (wonAmount > 0) {
-            // Wygrywamy (lub mamy remis), wpłacamy profit do bazy
-            viewModelScope.launch { walletDao.changeCoins(userId, wonAmount.toInt()) }
+        viewModelScope.launch {
+            if (wonAmount > 0) {
+                walletDao.changeCoins(userId, wonAmount.toInt())
+            }
+            if (_balance.value < UserRepository.PITY_THRESHOLD) {
+                walletDao.changeCoins(userId, UserRepository.PITY_AMOUNT)
+                _balance.value += UserRepository.PITY_AMOUNT
+                _pityGranted.value = true
+            }
         }
     }
 
