@@ -58,4 +58,17 @@ class UserRepository(
     }
 
     suspend fun getUserById(id: Int): UserEntity? = userDao.getUserById(id)
+
+    suspend fun checkAndGrantPity(userId: Int): Boolean {
+        val coins = walletDao.getWalletNow(userId)?.coins ?: return false
+        return if (coins < PITY_THRESHOLD) {
+            walletDao.changeCoins(userId, PITY_AMOUNT)
+            true
+        } else false
+    }
+
+    companion object {
+        const val PITY_THRESHOLD = 10
+        const val PITY_AMOUNT = 100
+    }
 }

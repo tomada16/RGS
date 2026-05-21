@@ -92,6 +92,11 @@ class CrapsViewModel(
     private val _state = MutableStateFlow(CrapsUiState())
     val state: StateFlow<CrapsUiState> = _state.asStateFlow()
 
+    private val _pityGranted = MutableStateFlow(false)
+    val pityGranted: StateFlow<Boolean> = _pityGranted.asStateFlow()
+
+    fun onPityDismissed() { _pityGranted.value = false }
+
     init {
         // Obserwuj portfel reaktywnie — Room emituje nowe wartości po każdej zmianie.
         viewModelScope.launch {
@@ -209,6 +214,7 @@ class CrapsViewModel(
                 2, 3, 12 -> {
                     // Craps — Pass Line przegrywa
                     walletDao.changeCoins(userId, -s.currentBet)
+                    if (app.userRepository.checkAndGrantPity(userId)) _pityGranted.value = true
                     _state.update {
                         it.copy(
                             die1 = die1, die2 = die2, hasRolled = true,
@@ -244,6 +250,7 @@ class CrapsViewModel(
                 7 -> {
                     // Seven-out — Pass Line przegrywa
                     walletDao.changeCoins(userId, -s.currentBet)
+                    if (app.userRepository.checkAndGrantPity(userId)) _pityGranted.value = true
                     _state.update {
                         it.copy(
                             die1 = die1, die2 = die2,
