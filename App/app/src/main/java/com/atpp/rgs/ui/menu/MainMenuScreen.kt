@@ -151,6 +151,7 @@ fun MainMenuScreen(
                 modifier = Modifier.padding(innerPadding),
             )
             MainTab.SETTINGS -> SettingsScreen(
+                app      = app,
                 modifier = Modifier.padding(innerPadding)
             )
             MainTab.PROFILE -> ProfileScreen(

@@ -19,6 +19,12 @@ Folder na zasoby medialne dołączane do APK. Dostęp przez `AssetManager`
 | Muzyka / długie audio              | `assets/audio/`    | `MediaAssets.audioFd(...)` + MediaPlayer |
 | Wideo                              | `assets/video/`    | `MediaAssets.videoFd(...)` + MediaPlayer |
 
+## Pliki audio — atrybucja
+
+| Plik | Tytuł | Autor | Licencja |
+|------|-------|-------|----------|
+| `audio/background_music.mp3` | Lo-Fi Music Loop – Sentimental Jazzy Love | Sonican | [Pixabay License](https://pixabay.com/music/lofi-lo-fi-music-loop-sentimental-jazzy-love-473154/) |
+
 ## Ograniczenia
 
 - **`res/raw/`**: nazwy plików tylko `[a-z0-9_]`, bez podfolderów. Ale dostępne przez `R.raw.*` z autouzupełnianiem.

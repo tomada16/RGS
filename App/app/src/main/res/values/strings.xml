@@ -51,6 +51,11 @@
     <string name="auth_error_password_mismatch">Passwords do not match</string>
     <string name="auth_error_password_required">Please confirm your password</string>
 
+    <!-- ============ Settings ============ -->
+    <string name="settings_section_audio">ACOUSTICS &amp; AUDIO</string>
+    <string name="settings_master_volume">MASTER VOLUME</string>
+    <string name="settings_music_volume">BACKGROUND MUSIC</string>
+
     <!-- ============ Pity system ============ -->
     <string name="pity_dialog_title">Low Balance</string>
     <string name="pity_dialog_message">Your balance dropped below $10. We\'ve added $%1$,d to keep you playing!</string>
