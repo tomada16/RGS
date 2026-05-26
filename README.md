@@ -18,7 +18,6 @@ kupuje kosmetyczne motywy w sklepie, śledzi statystyki i historię rozgrywek na
 - [Model danych (Room)](#model-danych-room)
 - [Struktura projektu](#struktura-projektu)
 - [Uruchomienie](#uruchomienie)
-- [Spełnienie wymagań projektu](#spełnienie-wymagań-projektu)
 
 ---
 
