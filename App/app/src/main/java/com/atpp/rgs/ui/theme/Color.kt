@@ -1,5 +1,6 @@
 package com.atpp.rgs.ui.theme
 
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 /**
@@ -68,4 +69,20 @@ val BrandOutline = Color(0xFF464B53)
 
 /** Półprzezroczysty scrim pod modalami (80% czerni). */
 val BrandScrim = Color(0xCC000000)
+
+// ============================================================
+// Wspólne tła
+// ============================================================
+
+/**
+ * Pionowy gradient tła używany na ekranach Menu, Shop, Settings i Profile —
+ * czerń → burgund → czerwień → burgund → czerń. Źródło prawdy dla spójnego tła paneli.
+ */
+val BrandMenuBackground: Brush = Brush.verticalGradient(
+    0.00f to BrandBlack,
+    0.28f to BrandRedDark,
+    0.50f to BrandRed,
+    0.72f to BrandRedDark,
+    1.00f to BrandBlack
+)
 

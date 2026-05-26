@@ -13,6 +13,7 @@ import com.atpp.rgs.ui.misc.CRAPS_THEME_REGISTRY
 import com.atpp.rgs.ui.misc.CrapsTheme
 import com.atpp.rgs.ui.shop.ItemCategory
 import com.atpp.rgs.ui.shop.SHOP_CATALOG
+import com.atpp.rgs.data.repository.GameRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -265,6 +266,41 @@ class CrapsViewModel(
         val dontPassBet = updatedBets[BetType.DONT_PASS] ?: 0
 
         when (s.phase) {
+
+            CrapsPhase.COME_OUT -> when (total) {
+                7, 11 -> {
+                    // Natural — Pass Line wygrywa
+                    walletDao.changeCoins(userId, s.currentBet)
+                    recordRound(GameRepository.Outcome.WIN, s.currentBet, s.currentBet)
+                    _state.update {
+                        it.copy(
+                            die1 = die1, die2 = die2, hasRolled = true,
+                            isRolling = false, rollHistory = newHistory,
+                            roundResult = RoundResult.WIN, lastBetAmount = s.currentBet
+                        )
+                    }
+                }
+                2, 3, 12 -> {
+                    // Craps — Pass Line przegrywa
+                    walletDao.changeCoins(userId, -s.currentBet)
+                    recordRound(GameRepository.Outcome.LOSE, s.currentBet, -s.currentBet)
+                    if (app.userRepository.checkAndGrantPity(userId)) _pityGranted.value = true
+                    _state.update {
+                        it.copy(
+                            die1 = die1, die2 = die2, hasRolled = true,
+                            isRolling = false, rollHistory = newHistory,
+                            roundResult = RoundResult.LOSE, lastBetAmount = s.currentBet
+                        )
+                    }
+                }
+                else -> {
+                    // Ustalenie punktu — gra trwa
+                    _state.update {
+                        it.copy(
+                            die1 = die1, die2 = die2, hasRolled = true,
+                            isRolling = false, rollHistory = newHistory,
+                            phase = CrapsPhase.POINT, point = total
+                        )
             CrapsPhase.COME_OUT -> {
                 when (total) {
                     7, 11 -> { rollPayout += passBet * 2; rollLost += dontPassBet; roundEnded = true }
@@ -328,10 +364,59 @@ class CrapsViewModel(
                     tableBets = updatedBets, die1 = die1, die2 = die2, hasRolled = true,
                     isRolling = false, rollHistory = newHistory
                 )
+            CrapsPhase.POINT -> when (total) {
+                s.point -> {
+                    // Trafił punkt — Pass Line wygrywa
+                    walletDao.changeCoins(userId, s.currentBet)
+                    recordRound(GameRepository.Outcome.WIN, s.currentBet, s.currentBet)
+                    _state.update {
+                        it.copy(
+                            die1 = die1, die2 = die2,
+                            isRolling = false, rollHistory = newHistory,
+                            roundResult = RoundResult.WIN, lastBetAmount = s.currentBet
+                        )
+                    }
+                }
+                7 -> {
+                    // Seven-out — Pass Line przegrywa
+                    walletDao.changeCoins(userId, -s.currentBet)
+                    recordRound(GameRepository.Outcome.LOSE, s.currentBet, -s.currentBet)
+                    if (app.userRepository.checkAndGrantPity(userId)) _pityGranted.value = true
+                    _state.update {
+                        it.copy(
+                            die1 = die1, die2 = die2,
+                            isRolling = false, rollHistory = newHistory,
+                            roundResult = RoundResult.LOSE, lastBetAmount = s.currentBet
+                        )
+                    }
+                }
+                else -> {
+                    // Ani punkt ani siódemka — kontynuuj
+                    _state.update {
+                        it.copy(
+                            die1 = die1, die2 = die2,
+                            isRolling = false, rollHistory = newHistory
+                        )
+                    }
+                }
             }
         }
     }
 
+    private suspend fun recordRound(
+        outcome: GameRepository.Outcome,
+        betAmount: Int,
+        netAmount: Int
+    ) {
+        app.gameRepository.recordRound(userId, "Craps", outcome, betAmount, netAmount)
+    }
+
+    // ─── Reset rundy ─────────────────────────────────────────────────────────
+
+    /**
+     * Resetuje stan do nowej rundy po wyświetleniu wyniku.
+     * Historia rzutów pozostaje nienaruszona.
+     */
     fun newRound() {
         _state.update {
             it.copy(

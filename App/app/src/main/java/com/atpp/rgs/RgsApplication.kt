@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import com.atpp.rgs.audio.MusicManager
 import com.atpp.rgs.data.AppDatabase
+import com.atpp.rgs.data.repository.GameRepository
 import com.atpp.rgs.data.repository.UserRepository
 import com.atpp.rgs.session.SessionManager
 
@@ -23,6 +24,15 @@ class RgsApplication : Application() {
 
     val userRepository: UserRepository by lazy {
         UserRepository(database.userDao(), database.walletDao())
+    }
+
+    val gameRepository: GameRepository by lazy {
+        GameRepository(
+            database.gameDao(),
+            database.gameResultsDao(),
+            database.gameSessionDao(),
+            database.gameStatsDao()
+        )
     }
 
     val sessionManager: SessionManager by lazy { SessionManager(this) }
