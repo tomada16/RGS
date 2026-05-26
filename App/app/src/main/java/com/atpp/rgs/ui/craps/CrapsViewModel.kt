@@ -8,16 +8,17 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.atpp.rgs.R
 import com.atpp.rgs.RgsApplication
+import com.atpp.rgs.data.repository.GameRepository
+import com.atpp.rgs.ui.misc.CRAPS_THEME_REGISTRY
+import com.atpp.rgs.ui.misc.CrapsTheme
+import com.atpp.rgs.ui.shop.ItemCategory
+import com.atpp.rgs.ui.shop.SHOP_CATALOG
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.atpp.rgs.ui.misc.CRAPS_THEME_REGISTRY
-import com.atpp.rgs.ui.misc.CrapsTheme
-import com.atpp.rgs.ui.shop.ItemCategory
-import com.atpp.rgs.ui.shop.SHOP_CATALOG
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -37,7 +38,7 @@ data class CrapsUiState(
     val point: Int? = null,
 
     val tableBets: Map<BetType, Int> = emptyMap(),
-    val lastRoundBets: Map<BetType, Int> = emptyMap(), // <--- DODANE DO REPEAT
+    val lastRoundBets: Map<BetType, Int> = emptyMap(), // Do przycisku REPEAT
     val chipHistory: List<ChipAction> = emptyList(),
     val selectedChipAmount: Int = 10,
 
@@ -66,6 +67,7 @@ class CrapsViewModel(
     private val walletDao = app.database.walletDao()
     private val shopDao = app.database.shopDao()
 
+    // --- DYNAMICZNY MOTYW STOŁU ---
     val currentTheme: StateFlow<CrapsTheme> = shopDao.getEquippedItems(userId)
         .map { equippedList ->
             val equippedTableId = equippedList.find { it.category == ItemCategory.CRAPS_TABLE.name }?.itemId
@@ -78,12 +80,10 @@ class CrapsViewModel(
             initialValue = CRAPS_THEME_REGISTRY["ocean_blue"]!!
         )
 
+    // --- DYNAMICZNY WYBÓR KOŚCI ---
     val currentDicePrefix: StateFlow<String> = shopDao.getEquippedItems(userId)
         .map { equippedList ->
-            // 1. Szukamy w bazie ubranego przedmiotu z kategorii CRAPS_DICE
             val equippedDiceId = equippedList.find { it.category == ItemCategory.CRAPS_DICE.name }?.itemId
-
-            // 2. Szukamy jego prefiksu w katalogu (jak nie znajdzie, dajemy domyślne)
             SHOP_CATALOG.find { it.id == equippedDiceId }?.assetPrefix ?: "classic_white"
         }
         .stateIn(
@@ -112,39 +112,36 @@ class CrapsViewModel(
         _state.update { it.copy(selectedChipAmount = amount) }
     }
 
-    // ─── MUTUALLY EXCLUSIVE BETS (ZMIANA ZAKŁADU W LOCIE) ───
+    // ─── ZAKŁADY WZAJEMNIE WYKLUCZAJĄCE SIĘ ───
     fun placeBet(betType: BetType) {
         val s = _state.value
         val amount = s.selectedChipAmount
 
         if (s.isRolling || s.roundResult != null) return
-        if (s.phase == CrapsPhase.POINT) return // Cicho blokujemy w fazie POINT (bez błędu textowego)
+        if (s.phase == CrapsPhase.POINT) return
 
         val opposingBetType = if (betType == BetType.PASS_LINE) BetType.DONT_PASS else BetType.PASS_LINE
         val opposingBetAmount = s.tableBets[opposingBetType] ?: 0
 
-        // Czy stać nas na zakład, BAZUJĄC na tym, że kasa z przeciwnego zaraz wróci do nas?
+        // Czy stać nas na zakład uwzględniając zwrot z przeciwnego pola?
         if (amount > (s.walletCoins + opposingBetAmount)) {
             _state.update { it.copy(errorResId = R.string.craps_error_insufficient_funds) }
             return
         }
 
         viewModelScope.launch {
-            // 1. Zwracamy zakład przeciwstawny (jeśli istnieje)
             if (opposingBetAmount > 0) {
                 walletDao.changeCoins(userId, opposingBetAmount)
             }
 
-            // 2. Pobieramy nowy zakład
             val rowsUpdated = walletDao.deductCoins(userId, amount)
             if (rowsUpdated > 0) {
                 val currentBetOnType = s.tableBets[betType] ?: 0
                 val updatedBets = s.tableBets.toMutableMap().apply {
-                    if (opposingBetAmount > 0) remove(opposingBetType) // Usuwamy przeciwstawny z mapy
+                    if (opposingBetAmount > 0) remove(opposingBetType)
                     put(betType, currentBetOnType + amount)
                 }
 
-                // Filtr historii: usuwamy poprzednie akcje przeciwnego zakładu, żeby "Cofnij" działało idealnie
                 val filteredHistory = if (opposingBetAmount > 0) {
                     s.chipHistory.filter { it.betType != opposingBetType }
                 } else s.chipHistory
@@ -199,7 +196,6 @@ class CrapsViewModel(
         }
     }
 
-    // ─── POWTARZANIE ZAKŁADU (REPEAT) ───
     fun repeatBet() {
         val s = _state.value
         if (s.isRolling || s.roundResult != null || s.phase == CrapsPhase.POINT) return
@@ -208,19 +204,16 @@ class CrapsViewModel(
         val currentTableSum = s.totalBetAmount
         val totalNeeded = s.lastRoundBets.values.sum()
 
-        // Uwzględniamy to, że kasa leżąca obecnie na stole do nas wróci przed postawieniem powtórki
         if (totalNeeded > (s.walletCoins + currentTableSum)) {
             _state.update { it.copy(errorResId = R.string.craps_error_insufficient_funds) }
             return
         }
 
         viewModelScope.launch {
-            // 1. Zdejmujemy wszystko ze stołu z powrotem do portfela
             if (currentTableSum > 0) {
                 walletDao.changeCoins(userId, currentTableSum)
             }
 
-            // 2. Pobieramy kasę na powtórzony zakład
             val rowsUpdated = walletDao.deductCoins(userId, totalNeeded)
             if (rowsUpdated > 0) {
                 val newHistory = s.lastRoundBets.map { ChipAction(it.key, it.value) }
@@ -295,12 +288,22 @@ class CrapsViewModel(
         }
 
         if (roundEnded) {
-            val savedBets = updatedBets.toMap() // ─── Zapis do REPEAT przed czyszczeniem ───
+            val savedBets = updatedBets.toMap()
             updatedBets.clear()
 
             if (rollPayout > 0) {
                 walletDao.changeCoins(userId, rollPayout)
             }
+
+            // Statystyki do GameRepository
+            val totalBet = passBet + dontPassBet
+            val netAmount = rollPayout - totalLost
+            val outcome = when {
+                netAmount > 0 -> GameRepository.Outcome.WIN
+                netAmount < 0 -> GameRepository.Outcome.LOSE
+                else -> GameRepository.Outcome.DRAW
+            }
+            app.gameRepository.recordRound(userId, "Craps", outcome, totalBet, netAmount)
 
             if (rollLost > rollPayout && app.userRepository.checkAndGrantPity(userId)) {
                 _pityGranted.value = true
@@ -313,7 +316,7 @@ class CrapsViewModel(
             }
             _state.update {
                 it.copy(
-                    tableBets = updatedBets, lastRoundBets = savedBets, // <--- REJESTRUJEMY
+                    tableBets = updatedBets, lastRoundBets = savedBets,
                     die1 = die1, die2 = die2, hasRolled = true,
                     isRolling = false, rollHistory = newHistory,
                     roundResult = finalResult, totalPayout = rollPayout, totalLost = rollLost

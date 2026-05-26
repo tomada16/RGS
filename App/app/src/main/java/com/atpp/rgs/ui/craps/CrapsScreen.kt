@@ -58,6 +58,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.BorderStroke
+import com.atpp.rgs.data.repository.UserRepository
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Główny ekran gry Craps (Ujednolicony z Blackjackiem)
@@ -73,6 +74,26 @@ fun CrapsScreen(
     val state by viewModel.state.collectAsState()
     val theme by viewModel.currentTheme.collectAsState()
     val dicePrefix by viewModel.currentDicePrefix.collectAsState()
+
+    // ─── PRZYWRÓCONA NOWOŚĆ ZE STAREGO KODU (PITY SYSTEM) ───
+    val pityGranted by viewModel.pityGranted.collectAsState()
+
+    if (pityGranted) {
+        AlertDialog(
+            onDismissRequest = viewModel::onPityDismissed,
+            title = { Text(stringResource(R.string.pity_dialog_title)) },
+            text  = {
+                Text(
+                    stringResource(R.string.pity_dialog_message, UserRepository.PITY_AMOUNT)
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::onPityDismissed) {
+                    Text(stringResource(R.string.pity_dialog_btn))
+                }
+            }
+        )
+    }
 
     var showWinLossOverlay by remember { mutableStateOf(false) }
 
