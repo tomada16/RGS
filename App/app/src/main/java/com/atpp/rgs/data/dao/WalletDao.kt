@@ -26,4 +26,9 @@ interface WalletDao {
 
     @Query("UPDATE wallets SET coins = coins + :amount, updated_at = :date WHERE user_id = :userId")
     suspend fun changeCoins(userId: Int, amount: Int, date: Date = Date())
+
+    // --- DODAJ TĘ FUNKCJĘ ---
+    // Pobiera monety TYLKO wtedy, gdy portfel ma ich wystarczająco dużo. Zwraca liczbę zaktualizowanych wierszy (1 = sukces, 0 = brak kasy).
+    @Query("UPDATE wallets SET coins = coins - :amount, updated_at = :date WHERE user_id = :userId AND coins >= :amount")
+    suspend fun deductCoins(userId: Int, amount: Int, date: Date = Date()): Int
 }

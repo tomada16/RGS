@@ -65,6 +65,7 @@
     <!-- Table / point indicator -->
     <string name="craps_roll_to_start">ROLL TO START</string>
     <string name="craps_point_label">POINT</string>
+    <string name="craps_error_point_established">Bets locked during POINT phase!</string>
 
     <!-- Bets -->
     <string name="craps_place_your_bets">PLACE YOUR BETS</string>

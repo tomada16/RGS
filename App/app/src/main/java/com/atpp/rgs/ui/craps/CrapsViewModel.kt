@@ -14,73 +14,49 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.atpp.rgs.ui.misc.THEME_REGISTRY
-import com.atpp.rgs.ui.misc.TableTheme
+import com.atpp.rgs.ui.misc.CRAPS_THEME_REGISTRY
+import com.atpp.rgs.ui.misc.CrapsTheme
+import com.atpp.rgs.ui.shop.ItemCategory
+import com.atpp.rgs.ui.shop.SHOP_CATALOG
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
-// ─── Fazy gry ────────────────────────────────────────────────────────────────
+// ─── ZASADY GRY I STRUKTURY DANYCH ───────────────────────────────────────────
 
-/** Faza rzutu wyjściowego (come-out) lub faza punktu. */
 enum class CrapsPhase { COME_OUT, POINT }
+enum class RoundResult { WIN, LOSE, PUSH }
+enum class BetType { PASS_LINE, DONT_PASS }
 
-/** Wynik zamkniętej rundy. */
-enum class RoundResult { WIN, LOSE }
-
-// ─── Stan UI ─────────────────────────────────────────────────────────────────
-
-/**
- * Wpis w historii rzutów widoczny jako mały kafelek.
- */
+data class ChipAction(val betType: BetType, val amount: Int)
 data class RollHistoryItem(val total: Int)
 
-/**
- * Kompletny, niemutowalny stan ekranu Craps.
- * Emitowany przez [CrapsViewModel.state] jako StateFlow.
- */
 data class CrapsUiState(
-    /** Saldo portfela gracza (aktualizowane reaktywnie z Room). */
     val walletCoins: Int = 0,
-
-    /** Aktualna faza gry. */
     val phase: CrapsPhase = CrapsPhase.COME_OUT,
-
-    /** Ustalona liczba punktu (null w fazie COME_OUT). */
     val point: Int? = null,
 
-    /** Łączna wartość postawionych żetonów w tej rundzie. */
-    val currentBet: Int = 0,
+    val tableBets: Map<BetType, Int> = emptyMap(),
+    val lastRoundBets: Map<BetType, Int> = emptyMap(), // <--- DODANE DO REPEAT
+    val chipHistory: List<ChipAction> = emptyList(),
+    val selectedChipAmount: Int = 10,
 
-    /**
-     * Historia dodanych żetonów (wartości) — służy do obsługi „Cofnij".
-     * Zablokowana w fazie POINT (zakład jest wtedy zamrożony).
-     */
-    val chipHistory: List<Int> = emptyList(),
-
-    /** Wartość pierwszej kostki (1–6). */
     val die1: Int = 1,
-
-    /** Wartość drugiej kostki (1–6). */
     val die2: Int = 2,
-
-    /** True, gdy pierwsza kostka została kiedykolwiek rzucona w tej rundzie. */
     val hasRolled: Boolean = false,
-
-    /** Ostatnie maks. 8 wyrzuconych sum — do wyświetlenia w historii. */
     val rollHistory: List<RollHistoryItem> = emptyList(),
-
-    /** True podczas animacji toczenia kostek. */
     val isRolling: Boolean = false,
-
-    /** Wynik rundy lub null gdy gra trwa. */
     val roundResult: RoundResult? = null,
 
-    /** Kwota wygranej/przegranej — wyświetlana na nakładce wyniku. */
-    val lastBetAmount: Int = 0,
+    val totalPayout: Int = 0,
+    val totalLost: Int = 0,
 
-    /** Identyfikator zasobu błędu do wyświetlenia (null = brak błędu). */
     @StringRes val errorResId: Int? = null
-)
+) {
+    val totalBetAmount: Int get() = tableBets.values.sum()
+}
 
-// ─── ViewModel ───────────────────────────────────────────────────────────────
+// ─── VIEWMODEL ───────────────────────────────────────────────────────────────
 
 class CrapsViewModel(
     private val app: RgsApplication,
@@ -88,6 +64,33 @@ class CrapsViewModel(
 ) : ViewModel() {
 
     private val walletDao = app.database.walletDao()
+    private val shopDao = app.database.shopDao()
+
+    val currentTheme: StateFlow<CrapsTheme> = shopDao.getEquippedItems(userId)
+        .map { equippedList ->
+            val equippedTableId = equippedList.find { it.category == ItemCategory.CRAPS_TABLE.name }?.itemId
+            val prefix = SHOP_CATALOG.find { it.id == equippedTableId }?.assetPrefix ?: "ocean_blue"
+            CRAPS_THEME_REGISTRY[prefix] ?: CRAPS_THEME_REGISTRY["ocean_blue"]!!
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = CRAPS_THEME_REGISTRY["ocean_blue"]!!
+        )
+
+    val currentDicePrefix: StateFlow<String> = shopDao.getEquippedItems(userId)
+        .map { equippedList ->
+            // 1. Szukamy w bazie ubranego przedmiotu z kategorii CRAPS_DICE
+            val equippedDiceId = equippedList.find { it.category == ItemCategory.CRAPS_DICE.name }?.itemId
+
+            // 2. Szukamy jego prefiksu w katalogu (jak nie znajdzie, dajemy domyślne)
+            SHOP_CATALOG.find { it.id == equippedDiceId }?.assetPrefix ?: "classic_white"
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = "classic_white"
+        )
 
     private val _state = MutableStateFlow(CrapsUiState())
     val state: StateFlow<CrapsUiState> = _state.asStateFlow()
@@ -98,7 +101,6 @@ class CrapsViewModel(
     fun onPityDismissed() { _pityGranted.value = false }
 
     init {
-        // Obserwuj portfel reaktywnie — Room emituje nowe wartości po każdej zmianie.
         viewModelScope.launch {
             walletDao.getWalletByUserId(userId).collect { wallet ->
                 _state.update { it.copy(walletCoins = wallet?.coins ?: 0) }
@@ -106,58 +108,137 @@ class CrapsViewModel(
         }
     }
 
-    // ─── Obsługa zakładu ─────────────────────────────────────────────────────
+    fun selectChip(amount: Int) {
+        _state.update { it.copy(selectedChipAmount = amount) }
+    }
 
-    /**
-     * Dodaje żeton o wartości [amount] do bieżącego zakładu.
-     * Dostępne tylko w fazie COME_OUT (zakład jest zamrożony po ustaleniu punktu).
-     */
-    fun addChip(amount: Int) {
+    // ─── MUTUALLY EXCLUSIVE BETS (ZMIANA ZAKŁADU W LOCIE) ───
+    fun placeBet(betType: BetType) {
         val s = _state.value
-        if (s.phase == CrapsPhase.POINT || s.isRolling || s.roundResult != null) return
+        val amount = s.selectedChipAmount
 
-        val newBet = s.currentBet + amount
-        if (newBet > s.walletCoins) {
+        if (s.isRolling || s.roundResult != null) return
+        if (s.phase == CrapsPhase.POINT) return // Cicho blokujemy w fazie POINT (bez błędu textowego)
+
+        val opposingBetType = if (betType == BetType.PASS_LINE) BetType.DONT_PASS else BetType.PASS_LINE
+        val opposingBetAmount = s.tableBets[opposingBetType] ?: 0
+
+        // Czy stać nas na zakład, BAZUJĄC na tym, że kasa z przeciwnego zaraz wróci do nas?
+        if (amount > (s.walletCoins + opposingBetAmount)) {
             _state.update { it.copy(errorResId = R.string.craps_error_insufficient_funds) }
             return
         }
-        _state.update {
-            it.copy(
-                currentBet  = newBet,
-                chipHistory = it.chipHistory + amount,
-                errorResId  = null
-            )
+
+        viewModelScope.launch {
+            // 1. Zwracamy zakład przeciwstawny (jeśli istnieje)
+            if (opposingBetAmount > 0) {
+                walletDao.changeCoins(userId, opposingBetAmount)
+            }
+
+            // 2. Pobieramy nowy zakład
+            val rowsUpdated = walletDao.deductCoins(userId, amount)
+            if (rowsUpdated > 0) {
+                val currentBetOnType = s.tableBets[betType] ?: 0
+                val updatedBets = s.tableBets.toMutableMap().apply {
+                    if (opposingBetAmount > 0) remove(opposingBetType) // Usuwamy przeciwstawny z mapy
+                    put(betType, currentBetOnType + amount)
+                }
+
+                // Filtr historii: usuwamy poprzednie akcje przeciwnego zakładu, żeby "Cofnij" działało idealnie
+                val filteredHistory = if (opposingBetAmount > 0) {
+                    s.chipHistory.filter { it.betType != opposingBetType }
+                } else s.chipHistory
+
+                _state.update {
+                    it.copy(
+                        tableBets = updatedBets,
+                        chipHistory = filteredHistory + ChipAction(betType, amount),
+                        errorResId = null
+                    )
+                }
+            }
         }
     }
 
-    /**
-     * Cofa ostatnio dodany żeton.
-     * Dostępne tylko w fazie COME_OUT.
-     */
     fun undoLastChip() {
         val s = _state.value
-        if (s.phase == CrapsPhase.POINT || s.chipHistory.isEmpty() || s.isRolling) return
-        val last = s.chipHistory.last()
-        _state.update {
-            it.copy(
-                currentBet  = it.currentBet - last,
-                chipHistory = it.chipHistory.dropLast(1),
-                errorResId  = null
-            )
+        if (s.chipHistory.isEmpty() || s.isRolling) return
+        if (s.phase == CrapsPhase.POINT) return
+
+        val lastAction = s.chipHistory.last()
+
+        viewModelScope.launch {
+            walletDao.changeCoins(userId, lastAction.amount)
+            val currentBetOnType = s.tableBets[lastAction.betType] ?: 0
+            val newAmount = (currentBetOnType - lastAction.amount).coerceAtLeast(0)
+
+            val updatedBets = s.tableBets.toMutableMap().apply {
+                if (newAmount > 0) put(lastAction.betType, newAmount)
+                else remove(lastAction.betType)
+            }
+
+            _state.update {
+                it.copy(
+                    tableBets = updatedBets,
+                    chipHistory = it.chipHistory.dropLast(1),
+                    errorResId = null
+                )
+            }
         }
     }
 
-    // ─── Rzut kostkami ───────────────────────────────────────────────────────
+    fun clearBet() {
+        val s = _state.value
+        if (s.isRolling || s.roundResult != null || s.totalBetAmount == 0) return
 
-    /**
-     * Rzuca kostkami:
-     * 1. Krótka animacja (~600 ms) z losowymi wartościami.
-     * 2. Finalny wynik przekazywany do [processResult].
-     */
+        viewModelScope.launch {
+            if (s.phase == CrapsPhase.COME_OUT) {
+                walletDao.changeCoins(userId, s.totalBetAmount)
+                _state.update { it.copy(tableBets = emptyMap(), chipHistory = emptyList()) }
+            }
+        }
+    }
+
+    // ─── POWTARZANIE ZAKŁADU (REPEAT) ───
+    fun repeatBet() {
+        val s = _state.value
+        if (s.isRolling || s.roundResult != null || s.phase == CrapsPhase.POINT) return
+        if (s.lastRoundBets.isEmpty()) return
+
+        val currentTableSum = s.totalBetAmount
+        val totalNeeded = s.lastRoundBets.values.sum()
+
+        // Uwzględniamy to, że kasa leżąca obecnie na stole do nas wróci przed postawieniem powtórki
+        if (totalNeeded > (s.walletCoins + currentTableSum)) {
+            _state.update { it.copy(errorResId = R.string.craps_error_insufficient_funds) }
+            return
+        }
+
+        viewModelScope.launch {
+            // 1. Zdejmujemy wszystko ze stołu z powrotem do portfela
+            if (currentTableSum > 0) {
+                walletDao.changeCoins(userId, currentTableSum)
+            }
+
+            // 2. Pobieramy kasę na powtórzony zakład
+            val rowsUpdated = walletDao.deductCoins(userId, totalNeeded)
+            if (rowsUpdated > 0) {
+                val newHistory = s.lastRoundBets.map { ChipAction(it.key, it.value) }
+                _state.update {
+                    it.copy(
+                        tableBets = s.lastRoundBets,
+                        chipHistory = newHistory,
+                        errorResId = null
+                    )
+                }
+            }
+        }
+    }
+
     fun roll() {
         val s = _state.value
         if (s.isRolling || s.roundResult != null) return
-        if (s.currentBet <= 0) {
+        if (s.totalBetAmount <= 0) {
             _state.update { it.copy(errorResId = R.string.craps_error_no_bet) }
             return
         }
@@ -165,135 +246,97 @@ class CrapsViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isRolling = true, errorResId = null) }
 
-            // Animacja toczenia — szybkie losowe zmiany
             repeat(10) {
                 delay(55)
                 _state.update { it.copy(die1 = (1..6).random(), die2 = (1..6).random()) }
             }
 
-            // Finalny wyrzut
-            val die1  = (1..6).random()
-            val die2  = (1..6).random()
+            val die1 = (1..6).random()
+            val die2 = (1..6).random()
             val total = die1 + die2
 
             processResult(die1, die2, total)
         }
     }
 
-    /**
-     * Przetwarza wynik rzutu zgodnie z zasadami Craps (Pass Line):
-     *
-     * Faza COME_OUT:
-     *  - 7 lub 11  → WIN (Natural)
-     *  - 2, 3, 12  → LOSE (Craps)
-     *  - inne      → ustalenie punktu, przejście do fazy POINT
-     *
-     * Faza POINT:
-     *  - suma == punkt → WIN
-     *  - 7             → LOSE (Seven-out)
-     *  - inne          → kontynuuj rzuty
-     */
     private suspend fun processResult(die1: Int, die2: Int, total: Int) {
         val s = _state.value
         val newHistory = (s.rollHistory + RollHistoryItem(total)).takeLast(8)
 
-        when (s.phase) {
+        var rollPayout = 0
+        var rollLost = 0
+        var roundEnded = false
+        val updatedBets = s.tableBets.toMutableMap()
 
-            CrapsPhase.COME_OUT -> when (total) {
-                7, 11 -> {
-                    // Natural — Pass Line wygrywa
-                    walletDao.changeCoins(userId, s.currentBet)
-                    _state.update {
-                        it.copy(
-                            die1 = die1, die2 = die2, hasRolled = true,
-                            isRolling = false, rollHistory = newHistory,
-                            roundResult = RoundResult.WIN, lastBetAmount = s.currentBet
-                        )
-                    }
-                }
-                2, 3, 12 -> {
-                    // Craps — Pass Line przegrywa
-                    walletDao.changeCoins(userId, -s.currentBet)
-                    if (app.userRepository.checkAndGrantPity(userId)) _pityGranted.value = true
-                    _state.update {
-                        it.copy(
-                            die1 = die1, die2 = die2, hasRolled = true,
-                            isRolling = false, rollHistory = newHistory,
-                            roundResult = RoundResult.LOSE, lastBetAmount = s.currentBet
-                        )
-                    }
-                }
-                else -> {
-                    // Ustalenie punktu — gra trwa
-                    _state.update {
-                        it.copy(
-                            die1 = die1, die2 = die2, hasRolled = true,
-                            isRolling = false, rollHistory = newHistory,
-                            phase = CrapsPhase.POINT, point = total
-                        )
+        val passBet = updatedBets[BetType.PASS_LINE] ?: 0
+        val dontPassBet = updatedBets[BetType.DONT_PASS] ?: 0
+
+        when (s.phase) {
+            CrapsPhase.COME_OUT -> {
+                when (total) {
+                    7, 11 -> { rollPayout += passBet * 2; rollLost += dontPassBet; roundEnded = true }
+                    2, 3 -> { rollLost += passBet; rollPayout += dontPassBet * 2; roundEnded = true }
+                    12 -> { rollLost += passBet; rollPayout += dontPassBet; roundEnded = true } // PUSH
+                    else -> {
+                        _state.update {
+                            it.copy(
+                                tableBets = updatedBets, die1 = die1, die2 = die2,
+                                hasRolled = true, isRolling = false, rollHistory = newHistory,
+                                phase = CrapsPhase.POINT, point = total
+                            )
+                        }
                     }
                 }
             }
+            CrapsPhase.POINT -> {
+                if (total == s.point) { rollPayout += passBet * 2; rollLost += dontPassBet; roundEnded = true }
+                else if (total == 7) { rollLost += passBet; rollPayout += dontPassBet * 2; roundEnded = true }
+            }
+        }
 
-            CrapsPhase.POINT -> when (total) {
-                s.point -> {
-                    // Trafił punkt — Pass Line wygrywa
-                    walletDao.changeCoins(userId, s.currentBet)
-                    _state.update {
-                        it.copy(
-                            die1 = die1, die2 = die2,
-                            isRolling = false, rollHistory = newHistory,
-                            roundResult = RoundResult.WIN, lastBetAmount = s.currentBet
-                        )
-                    }
-                }
-                7 -> {
-                    // Seven-out — Pass Line przegrywa
-                    walletDao.changeCoins(userId, -s.currentBet)
-                    if (app.userRepository.checkAndGrantPity(userId)) _pityGranted.value = true
-                    _state.update {
-                        it.copy(
-                            die1 = die1, die2 = die2,
-                            isRolling = false, rollHistory = newHistory,
-                            roundResult = RoundResult.LOSE, lastBetAmount = s.currentBet
-                        )
-                    }
-                }
-                else -> {
-                    // Ani punkt ani siódemka — kontynuuj
-                    _state.update {
-                        it.copy(
-                            die1 = die1, die2 = die2,
-                            isRolling = false, rollHistory = newHistory
-                        )
-                    }
-                }
+        if (roundEnded) {
+            val savedBets = updatedBets.toMap() // ─── Zapis do REPEAT przed czyszczeniem ───
+            updatedBets.clear()
+
+            if (rollPayout > 0) {
+                walletDao.changeCoins(userId, rollPayout)
+            }
+
+            if (rollLost > rollPayout && app.userRepository.checkAndGrantPity(userId)) {
+                _pityGranted.value = true
+            }
+
+            val finalResult = when {
+                rollPayout > (passBet + dontPassBet) -> RoundResult.WIN
+                rollPayout == dontPassBet && dontPassBet > 0 && total == 12 -> RoundResult.PUSH
+                else -> RoundResult.LOSE
+            }
+            _state.update {
+                it.copy(
+                    tableBets = updatedBets, lastRoundBets = savedBets, // <--- REJESTRUJEMY
+                    die1 = die1, die2 = die2, hasRolled = true,
+                    isRolling = false, rollHistory = newHistory,
+                    roundResult = finalResult, totalPayout = rollPayout, totalLost = rollLost
+                )
+            }
+        } else {
+            _state.update {
+                it.copy(
+                    tableBets = updatedBets, die1 = die1, die2 = die2, hasRolled = true,
+                    isRolling = false, rollHistory = newHistory
+                )
             }
         }
     }
 
-    // ─── Reset rundy ─────────────────────────────────────────────────────────
-
-    /**
-     * Resetuje stan do nowej rundy po wyświetleniu wyniku.
-     * Historia rzutów pozostaje nienaruszona.
-     */
     fun newRound() {
         _state.update {
             it.copy(
-                phase        = CrapsPhase.COME_OUT,
-                point        = null,
-                currentBet   = 0,
-                chipHistory  = emptyList(),
-                hasRolled    = false,
-                roundResult  = null,
-                lastBetAmount = 0,
-                errorResId    = null
+                phase = CrapsPhase.COME_OUT, point = null,
+                roundResult = null, totalPayout = 0, totalLost = 0, errorResId = null
             )
         }
     }
-
-    // ─── Factory ─────────────────────────────────────────────────────────────
 
     companion object {
         fun factory(app: RgsApplication, userId: Int): ViewModelProvider.Factory = viewModelFactory {

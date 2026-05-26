@@ -45,7 +45,9 @@ val SHOP_CATALOG = listOf(
     ShopItem("bj_deck_atlasnye", ItemCategory.BJ_DECK, "Imperial Atlasnye", "TSAR'S COLLECTION", 75, "atlasnye", R.drawable.atlasnye_shop_bg), // Zmień na obrazek pokazowy tej talii
 
     // 3. Bresciane (Włoski styl regionalny)
-    ShopItem("bj_deck_bresciane", ItemCategory.BJ_DECK, "Bresciane Heritage", "ITALIAN ELEGANCE", 150, "bresciane", R.drawable.bresciane_shop_bg)
+    ShopItem("bj_deck_bresciane", ItemCategory.BJ_DECK, "Bresciane Heritage", "ITALIAN ELEGANCE", 150, "bresciane", R.drawable.bresciane_shop_bg),
+
+    ShopItem("craps_table_ocean", ItemCategory.CRAPS_TABLE, "Ocean Blue", "UNKNOWN DEPTHS", 50, "ocean", R.drawable.ocean_shop_bg),
 )
 
 class ShopViewModel(
@@ -68,6 +70,7 @@ class ShopViewModel(
             if (currentEquip.isNullOrEmpty()) {
                 shopDao.equipItem(EquippedItemEntity(userId, ItemCategory.BJ_TABLE.name, "bj_table_emerald"))
                 shopDao.equipItem(EquippedItemEntity(userId, ItemCategory.BJ_DECK.name, "bj_deck_classic"))
+                shopDao.equipItem(EquippedItemEntity(userId, ItemCategory.CRAPS_TABLE.name, "craps_table_ocean"))
             }
         }
     }

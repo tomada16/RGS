@@ -2,6 +2,7 @@ package com.atpp.rgs.ui.misc
 
 import androidx.compose.ui.graphics.Color
 import com.atpp.rgs.R
+import androidx.compose.ui.graphics.Brush
 
 data class TableTheme(
     val bgResId: Int,
@@ -9,6 +10,39 @@ data class TableTheme(
     val brandGoldLight: Color,
     val buttonDark: Color,
     val buttonStay: Color
+)
+
+data class CrapsTheme(
+    val bgResId: Int,
+    val brandGold: Color,
+    val brandGoldLight: Color,
+    val buttonDark: Color,
+
+    // --- WYGLĄD ZAKŁADÓW ---
+    val passLineBg: Brush,
+    val dontPassBg: Brush,
+
+    // --- KOLORY KAFELKÓW HISTORII ---
+    val historySevenBg: Color,
+    val historyNaturalBg: Color,
+    val historyCrapsBg: Color,
+    val historyPointBg: Color
+)
+
+val CRAPS_THEME_REGISTRY = mapOf(
+    "ocean_blue" to CrapsTheme(
+        bgResId = R.drawable.ocean_craps_table_bg, // lub Twoje tło
+        brandGold = Color(0xFFC5A059),
+        brandGoldLight = Color(0xFFE8D099),
+        buttonDark = Color(0xFF0A1128),
+        passLineBg = Brush.verticalGradient(listOf(Color(0xFF003B73), Color(0xFF001F3D))),
+        dontPassBg = Brush.verticalGradient(listOf(Color(0xFF1E2433), Color(0xFF0A1128))),
+
+        historySevenBg = Color(0xFFC75A43),
+        historyNaturalBg = Color(0xFFC5A059).copy(alpha = 0.75f),
+        historyCrapsBg = Color(0xFF0A1128),
+        historyPointBg = Color(0xFF003B73).copy(alpha = 0.45f)
+    )
 )
 
 val THEME_REGISTRY = mapOf(
@@ -57,5 +91,5 @@ val THEME_REGISTRY = mapOf(
         brandGoldLight = Color(0xFFF9E596), // Jasnożółte złoto
         buttonDark = Color(0xFF101010),     // Prawie czysty czarny
         buttonStay = Color(0xFF2A2A2A)      // Ciemny grafit, ekstremalnie minimalistyczny
-    )
+    ),
 )
