@@ -155,6 +155,8 @@ fun MainMenuScreen(
                 modifier = Modifier.padding(innerPadding)
             )
             MainTab.PROFILE -> ProfileScreen(
+                app      = app,
+                userId   = userId,
                 onLogout = viewModel::logout,
                 modifier = Modifier.padding(innerPadding)
             )

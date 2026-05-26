@@ -34,8 +34,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.atpp.rgs.R
 import com.atpp.rgs.RgsApplication
-import com.atpp.rgs.ui.theme.BrandBlack
 import com.atpp.rgs.ui.theme.BrandDivider
+import com.atpp.rgs.ui.theme.BrandMenuBackground
 import com.atpp.rgs.ui.theme.BrandGold
 import com.atpp.rgs.ui.theme.BrandGoldDark
 import com.atpp.rgs.ui.theme.BrandPanel
@@ -54,7 +54,7 @@ fun SettingsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BrandBlack)
+            .background(BrandMenuBackground)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)

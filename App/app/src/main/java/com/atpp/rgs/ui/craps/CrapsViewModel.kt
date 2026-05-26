@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.atpp.rgs.R
 import com.atpp.rgs.RgsApplication
+import com.atpp.rgs.data.repository.GameRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -203,6 +204,7 @@ class CrapsViewModel(
                 7, 11 -> {
                     // Natural — Pass Line wygrywa
                     walletDao.changeCoins(userId, s.currentBet)
+                    recordRound(GameRepository.Outcome.WIN, s.currentBet, s.currentBet)
                     _state.update {
                         it.copy(
                             die1 = die1, die2 = die2, hasRolled = true,
@@ -214,6 +216,7 @@ class CrapsViewModel(
                 2, 3, 12 -> {
                     // Craps — Pass Line przegrywa
                     walletDao.changeCoins(userId, -s.currentBet)
+                    recordRound(GameRepository.Outcome.LOSE, s.currentBet, -s.currentBet)
                     if (app.userRepository.checkAndGrantPity(userId)) _pityGranted.value = true
                     _state.update {
                         it.copy(
@@ -239,6 +242,7 @@ class CrapsViewModel(
                 s.point -> {
                     // Trafił punkt — Pass Line wygrywa
                     walletDao.changeCoins(userId, s.currentBet)
+                    recordRound(GameRepository.Outcome.WIN, s.currentBet, s.currentBet)
                     _state.update {
                         it.copy(
                             die1 = die1, die2 = die2,
@@ -250,6 +254,7 @@ class CrapsViewModel(
                 7 -> {
                     // Seven-out — Pass Line przegrywa
                     walletDao.changeCoins(userId, -s.currentBet)
+                    recordRound(GameRepository.Outcome.LOSE, s.currentBet, -s.currentBet)
                     if (app.userRepository.checkAndGrantPity(userId)) _pityGranted.value = true
                     _state.update {
                         it.copy(
@@ -270,6 +275,14 @@ class CrapsViewModel(
                 }
             }
         }
+    }
+
+    private suspend fun recordRound(
+        outcome: GameRepository.Outcome,
+        betAmount: Int,
+        netAmount: Int
+    ) {
+        app.gameRepository.recordRound(userId, "Craps", outcome, betAmount, netAmount)
     }
 
     // ─── Reset rundy ─────────────────────────────────────────────────────────

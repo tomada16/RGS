@@ -56,6 +56,24 @@
     <string name="settings_master_volume">MASTER VOLUME</string>
     <string name="settings_music_volume">BACKGROUND MUSIC</string>
 
+    <!-- ============ Profile ============ -->
+    <string name="profile_member_since">MEMBER SINCE %1$s</string>
+    <string name="profile_balance">BALANCE</string>
+    <string name="profile_section_stats">STATISTICS</string>
+    <string name="profile_section_history">GAME HISTORY</string>
+    <string name="profile_stat_games">Games played</string>
+    <string name="profile_stat_wins">Wins</string>
+    <string name="profile_stat_losses">Losses</string>
+    <string name="profile_stat_winrate">Win rate</string>
+    <string name="profile_stat_net">Net result</string>
+    <string name="profile_winrate_format">%1$d%%</string>
+    <string name="profile_history_empty">No games played yet. Hit the tables!</string>
+    <string name="profile_show_more">SHOW MORE</string>
+    <string name="profile_bet_format">Bet $%1$,d</string>
+    <string name="profile_result_win">WIN</string>
+    <string name="profile_result_lose">LOSE</string>
+    <string name="profile_result_push">PUSH</string>
+
     <!-- ============ Pity system ============ -->
     <string name="pity_dialog_title">Low Balance</string>
     <string name="pity_dialog_message">Your balance dropped below $10. We\'ve added $%1$,d to keep you playing!</string>

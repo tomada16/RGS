@@ -16,6 +16,7 @@ import com.atpp.rgs.RgsApplication
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.atpp.rgs.data.repository.GameRepository
 import com.atpp.rgs.data.repository.UserRepository
 import com.atpp.rgs.ui.misc.THEME_REGISTRY
 import com.atpp.rgs.ui.misc.TableTheme
@@ -383,13 +384,23 @@ class BlackjackViewModel(
     }
 
     private fun payout(multiplier: Double) {
-        val wonAmount = _currentBet.value * multiplier
+        val betForRound = _currentBet.value
+        val wonAmount = betForRound * multiplier
         _balance.value += wonAmount
         _currentBet.value = 0.0
 
         viewModelScope.launch {
             if (wonAmount > 0) {
                 walletDao.changeCoins(userId, wonAmount.toInt())
+            }
+            if (betForRound > 0) {
+                val net = (wonAmount - betForRound).toInt()
+                val outcome = when {
+                    net > 0 -> GameRepository.Outcome.WIN
+                    net < 0 -> GameRepository.Outcome.LOSE
+                    else    -> GameRepository.Outcome.PUSH
+                }
+                app.gameRepository.recordRound(userId, "Blackjack", outcome, betForRound.toInt(), net)
             }
             if (_balance.value < UserRepository.PITY_THRESHOLD) {
                 walletDao.changeCoins(userId, UserRepository.PITY_AMOUNT)

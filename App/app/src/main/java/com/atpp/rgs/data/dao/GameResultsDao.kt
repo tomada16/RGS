@@ -18,6 +18,12 @@ interface GameResultsDao {
     @Query("SELECT * FROM game_results WHERE id = :resultId")
     suspend fun getResultById(resultId: Int): GameResultsEntity?
 
+    @Query("SELECT * FROM game_results WHERE name = :name LIMIT 1")
+    suspend fun getResultByName(name: String): GameResultsEntity?
+
+    @Insert
+    suspend fun insertResultReturningId(result: GameResultsEntity): Long
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertResult(resultsEntity: GameResultsEntity)
 
