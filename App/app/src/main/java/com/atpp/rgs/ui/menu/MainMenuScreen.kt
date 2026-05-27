@@ -1,39 +1,29 @@
 package com.atpp.rgs.ui.menu
 
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,29 +36,25 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.atpp.rgs.R
 import com.atpp.rgs.RgsApplication
-import com.atpp.rgs.data.repository.UserRepository
 import com.atpp.rgs.data.entity.GameEntity
 import com.atpp.rgs.data.entity.WalletEntity
+import com.atpp.rgs.data.repository.UserRepository
 import com.atpp.rgs.ui.components.GradientButton
 import com.atpp.rgs.ui.profile.ProfileScreen
 import com.atpp.rgs.ui.settings.SettingsScreen
 import com.atpp.rgs.ui.shop.ShopScreen
-import com.atpp.rgs.ui.theme.BrandBlack
-import com.atpp.rgs.ui.theme.BrandGold
-import com.atpp.rgs.ui.theme.BrandGoldDark
-import com.atpp.rgs.ui.theme.BrandPanel
-import com.atpp.rgs.ui.theme.BrandRed
-import com.atpp.rgs.ui.theme.BrandRedDark
-import com.atpp.rgs.ui.theme.BrandTextMuted
-import com.atpp.rgs.ui.theme.BrandWhite
+import com.atpp.rgs.ui.theme.*
 import java.util.Locale
 
 // ─────────────────────────────────────────────────────────────
@@ -99,22 +85,30 @@ fun MainMenuScreen(
     onNavigateToBlackjack: () -> Unit,
     onNavigateToCraps: () -> Unit
 ) {
-    val games      by viewModel.games.collectAsState()
-    val wallet     by viewModel.wallet.collectAsState()
+    val games       by viewModel.games.collectAsState()
+    val wallet      by viewModel.wallet.collectAsState()
     val pityGranted by viewModel.pityGranted.collectAsState()
     var selectedTab by remember { mutableStateOf(MainTab.MENU) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.checkPity()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     if (pityGranted) {
         AlertDialog(
             onDismissRequest = viewModel::onPityDismissed,
             title = { Text(stringResource(R.string.pity_dialog_title)) },
             text  = {
-                Text(
-                    stringResource(
-                        R.string.pity_dialog_message,
-                        UserRepository.PITY_AMOUNT
-                    )
-                )
+                Text(stringResource(R.string.pity_dialog_message, UserRepository.PITY_AMOUNT))
             },
             confirmButton = {
                 TextButton(onClick = viewModel::onPityDismissed) {
@@ -372,7 +366,6 @@ private fun GameTile(
  * Mapowanie nazwa gry → zasób drawable.
  * Aby dodać kolejną grę: dopisz wpis i wrzuć plik PNG do res/drawable/.
  */
-@DrawableRes
 private fun gameImageRes(name: String): Int? = when (name.lowercase(Locale.ROOT)) {
     "blackjack" -> R.drawable.bg_blackjack
     "craps"     -> R.drawable.bg_craps
@@ -392,7 +385,7 @@ private fun MainBottomNavBar(
         containerColor = BrandPanel,
         tonalElevation = 0.dp
     ) {
-        MainTab.values().forEach { tab ->
+        MainTab.entries.forEach { tab ->
             NavigationBarItem(
                 selected = tab == selectedTab,
                 onClick  = { onTabSelected(tab) },

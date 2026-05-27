@@ -75,30 +75,13 @@ fun CrapsScreen(
     val theme by viewModel.currentTheme.collectAsState()
     val dicePrefix by viewModel.currentDicePrefix.collectAsState()
 
-    // ─── PRZYWRÓCONA NOWOŚĆ ZE STAREGO KODU (PITY SYSTEM) ───
-    val pityGranted by viewModel.pityGranted.collectAsState()
-
-    if (pityGranted) {
-        AlertDialog(
-            onDismissRequest = viewModel::onPityDismissed,
-            title = { Text(stringResource(R.string.pity_dialog_title)) },
-            text  = {
-                Text(
-                    stringResource(R.string.pity_dialog_message, UserRepository.PITY_AMOUNT)
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = viewModel::onPityDismissed) {
-                    Text(stringResource(R.string.pity_dialog_btn))
-                }
-            }
-        )
-    }
-
     var showWinLossOverlay by remember { mutableStateOf(false) }
 
     // NOWOŚĆ: Logika ukrywania UI (Żetony znikają w fazie POINT oraz podczas samego rzutu)
     val showBettingUI = !state.isRolling && state.roundResult == null && state.phase == CrapsPhase.COME_OUT
+
+    // ZMIANA: Zawsze odejmujemy postawione pieniądze od portfela dla celów wizualnych
+    val effectiveBalance = state.walletCoins - state.totalBetAmount
 
     LaunchedEffect(state.roundResult) {
         if (state.roundResult != null) {
@@ -120,8 +103,9 @@ fun CrapsScreen(
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
+            // ZMIANA: Zasilamy TopBar naszym kalkulowanym, bieżącym saldem
             TopCasinoBar(
-                balance = state.walletCoins.toDouble(),
+                balance = effectiveBalance.toDouble(),
                 theme = theme,
                 onExit = onExit,
                 modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 32.dp).padding(top = 16.dp)
@@ -192,7 +176,8 @@ fun CrapsScreen(
                 ) {
                     ChipSelectorRow(
                         enabled = true,
-                        walletCoins = state.walletCoins,
+                        baseWalletCoins = state.walletCoins, // ZMIANA: Żeby nominały żetonów nie znikały
+                        effectiveBalance = effectiveBalance, // ZMIANA: Do wygaszania żetonów
                         selectedChipAmount = state.selectedChipAmount,
                         onChipSelect = viewModel::selectChip,
                         theme = theme
@@ -346,12 +331,15 @@ private fun CrapsBottomBar(
 @Composable
 private fun ChipSelectorRow(
     enabled: Boolean,
-    walletCoins: Int,
+    baseWalletCoins: Int, // Możesz to całkowicie usunąć z parametrów, jeśli chcesz posprzątać
+    effectiveBalance: Int,
     selectedChipAmount: Int,
     onChipSelect: (Int) -> Unit,
     theme: CrapsTheme
 ) {
-    val availableChips = getDynamicChipsCraps(walletCoins)
+    // ZMIANA: Zamiast baseWalletCoins używamy effectiveBalance.
+    // Dzięki temu żetony, na które nas nie stać, nie wejdą nawet do listy.
+    val availableChips = getDynamicChipsCraps(effectiveBalance)
 
     Row(
         modifier = Modifier
@@ -363,13 +351,12 @@ private fun ChipSelectorRow(
     ) {
         availableChips.forEach { chipValue ->
             val isSelected = chipValue == selectedChipAmount
-            val canAfford = chipValue <= walletCoins
 
             CasinoChip(
                 value = chipValue,
-                enabled = enabled && canAfford,
+                enabled = enabled, // ZMIANA: Usunięto dodatkowy warunek canAfford
                 isSelected = isSelected,
-                onClick = { if (canAfford && enabled) onChipSelect(chipValue) },
+                onClick = { if (enabled) onChipSelect(chipValue) },
                 theme = theme
             )
         }
@@ -980,7 +967,8 @@ fun getDynamicChipsCraps(balance: Int): List<Int> {
         100_000, 500_000, 1_000_000, 5_000_000,
         10_000_000, 50_000_000, 100_000_000, 500_000_000, 1_000_000_000
     )
-    return CRAPS_CHIP_VALUES.filter { it <= maxOf(balance, 10) }.takeLast(5)
+
+    return CRAPS_CHIP_VALUES.filter { it <= balance }.takeLast(5)
 }
 
 @Composable

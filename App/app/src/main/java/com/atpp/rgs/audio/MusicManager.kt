@@ -10,7 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -29,19 +29,25 @@ class MusicManager(private val context: Context) {
     val musicVolume: Flow<Float> = context.settingsDataStore.data
         .map { it[keyMusicVolume] ?: DEFAULT_MUSIC }
 
-    private var currentMaster = DEFAULT_MASTER
-    private var currentMusic  = DEFAULT_MUSIC
+    private var currentMaster = 0f
+    private var currentMusic  = 0f
     private var mediaPlayer: MediaPlayer? = null
 
-    fun start() {
+    init {
+        // NOWOŚĆ: Reaktywne i ciągłe nasłuchiwanie ustawień
+        // Gwarantuje, że odtwarzacz zawsze ma aktualną głośność, bez resetów
         scope.launch {
-            currentMaster = masterVolume.first()
-            currentMusic  = musicVolume.first()
-            startPlayer()
+            combine(masterVolume, musicVolume) { master, music ->
+                master to music
+            }.collect { (master, music) ->
+                currentMaster = master
+                currentMusic = music
+                applyVolume()
+            }
         }
     }
 
-    private fun startPlayer() {
+    fun start() {
         if (mediaPlayer != null) return
         try {
             val afd = MediaAssets.audioFd(context, "background_music.mp3")
@@ -49,25 +55,38 @@ class MusicManager(private val context: Context) {
                 setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
                 afd.close()
                 isLooping = true
-                applyVolume()
+
+                // Najpierw przygotowujemy odtwarzacz...
                 prepare()
+                // ...a dopiero potem aplikujemy ostateczną głośność, chroniąc się przed nadpisaniem!
+                applyVolume()
                 start()
             }
         } catch (_: Exception) { /* plik jeszcze niedodany do assets */ }
     }
 
     fun pause()  { mediaPlayer?.pause() }
-    fun resume() { if (mediaPlayer?.isPlaying == false) mediaPlayer?.start() }
-    fun release() { mediaPlayer?.release(); mediaPlayer = null }
+
+    fun resume() {
+        if (mediaPlayer?.isPlaying == false) {
+            applyVolume() // Asekuracyjne uderzenie głośnością po wybudzeniu
+            mediaPlayer?.start()
+        }
+    }
+
+    fun release() {
+        mediaPlayer?.release()
+        mediaPlayer = null
+    }
 
     fun setMasterVolume(value: Float) {
-        currentMaster = value
+        currentMaster = value // Optymistyczna aktualizacja UI
         applyVolume()
         scope.launch { context.settingsDataStore.edit { it[keyMasterVolume] = value } }
     }
 
     fun setMusicVolume(value: Float) {
-        currentMusic = value
+        currentMusic = value // Optymistyczna aktualizacja UI
         applyVolume()
         scope.launch { context.settingsDataStore.edit { it[keyMusicVolume] = value } }
     }

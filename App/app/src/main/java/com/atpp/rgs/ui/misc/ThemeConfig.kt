@@ -42,6 +42,36 @@ val CRAPS_THEME_REGISTRY = mapOf(
         historyNaturalBg = Color(0xFFC5A059).copy(alpha = 0.75f),
         historyCrapsBg = Color(0xFF0A1128),
         historyPointBg = Color(0xFF003B73).copy(alpha = 0.45f)
+    ),
+
+    // --- NOWY: SOLAR FLARE (Słoneczny, bursztynowy) ---
+    // Akcenty: Żywe, ciepłe złoto i mocne, rdzawe barwy.
+    "solar_flare" to CrapsTheme(
+        bgResId = R.drawable.solar_craps_table_bg, // np. solar_craps_bg
+        brandGold = Color(0xFFE59400),      // Żywe, ciepłe pomarańczowe złoto
+        brandGoldLight = Color(0xFFFFCB6B), // Jasny, słoneczny blask
+        buttonDark = Color(0xFF2A1604),     // Bardzo ciemny, ciepły brąz
+        passLineBg = Brush.verticalGradient(listOf(Color(0xFFB85E00), Color(0xFF7A3B00))), // Rdzawo-bursztynowy gradient
+        dontPassBg = Brush.verticalGradient(listOf(Color(0xFF4A2600), Color(0xFF2A1604))), // Ciemna czekolada
+        historySevenBg = Color(0xFFD9381E), // Mocna, ognista czerwień
+        historyNaturalBg = Color(0xFFE59400).copy(alpha = 0.75f),
+        historyCrapsBg = Color(0xFF2A1604),
+        historyPointBg = Color(0xFFB85E00).copy(alpha = 0.45f)
+    ),
+
+    // --- NOWY: VELVET ROSE (Gotycki, bordowy) ---
+    // Akcenty: Różowe złoto (Rose Gold) na tle głębokiego, ciemnego wina.
+    "crimson_rose" to CrapsTheme(
+        bgResId = R.drawable.rose_craps_table_bg, // np. rose_craps_bg
+        brandGold = Color(0xFFDDA7A5),      // Eleganckie, zgaszone Różowe Złoto
+        brandGoldLight = Color(0xFFFDF0F0), // Bardzo jasny, subtelny, chłodny róż
+        buttonDark = Color(0xFF1A0B14),     // Ekstremalnie ciemna, niemal czarna śliwka/bakłażan
+        passLineBg = Brush.verticalGradient(listOf(Color(0xFF6B1839), Color(0xFF38081C))), // Głębokie, aksamitne bordo
+        dontPassBg = Brush.verticalGradient(listOf(Color(0xFF2E1122), Color(0xFF1A0B14))), // Mroczny fiolet
+        historySevenBg = Color(0xFFC2183D), // Krwista, karmazynowa czerwień róży
+        historyNaturalBg = Color(0xFFDDA7A5).copy(alpha = 0.75f),
+        historyCrapsBg = Color(0xFF1A0B14),
+        historyPointBg = Color(0xFF6B1839).copy(alpha = 0.45f)
     )
 )
 

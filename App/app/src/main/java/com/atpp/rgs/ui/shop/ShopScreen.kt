@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.atpp.rgs.RgsApplication
 import com.atpp.rgs.ui.blackjack.formatFullCurrency
 import com.atpp.rgs.ui.misc.THEME_REGISTRY
+import com.atpp.rgs.ui.misc.CRAPS_THEME_REGISTRY
 import com.atpp.rgs.ui.misc.TableTheme
 import com.atpp.rgs.ui.theme.BrandBlack
 import com.atpp.rgs.ui.theme.BrandGold
@@ -122,7 +123,7 @@ fun ShopScreen(
                             onBuyClick = { viewModel.buyItem(item) },
                             onEquipClick = { viewModel.equipItem(item) },
                             onCardClick = {
-                                if (item.category == ItemCategory.BJ_TABLE) {
+                                if (item.category == ItemCategory.BJ_TABLE || item.category == ItemCategory.CRAPS_TABLE) {
                                     previewItem = item
                                 }
                             },
@@ -153,7 +154,36 @@ fun ShopScreen(
 
 @Composable
 fun ThemePreviewOverlay(item: ShopItem, onDismiss: () -> Unit) {
-    val theme = THEME_REGISTRY[item.assetPrefix] ?: THEME_REGISTRY["emerald"]!!
+    val isCraps = item.category == ItemCategory.CRAPS_TABLE
+
+    // --- DYNAMICZNE WYCIĄGANIE DANYCH ---
+    val bgResId: Int
+    val goldColor: Color
+    val goldLightColor: Color
+    val buttonDarkColor: Color
+    val buttonStayColor: Color? // Tylko w BJ
+    val btn1Text: String
+    val btn2Text: String?
+
+    if (isCraps) {
+        val theme = CRAPS_THEME_REGISTRY[item.assetPrefix] ?: CRAPS_THEME_REGISTRY["ocean_blue"]!!
+        bgResId = theme.bgResId
+        goldColor = theme.brandGold
+        goldLightColor = theme.brandGoldLight
+        buttonDarkColor = theme.buttonDark
+        buttonStayColor = null // Craps nie ma przycisku STAND
+        btn1Text = "ROLL"
+        btn2Text = null
+    } else {
+        val theme = THEME_REGISTRY[item.assetPrefix] ?: THEME_REGISTRY["emerald"]!!
+        bgResId = theme.bgResId
+        goldColor = theme.brandGold
+        goldLightColor = theme.brandGoldLight
+        buttonDarkColor = theme.buttonDark
+        buttonStayColor = theme.buttonStay
+        btn1Text = "HIT"
+        btn2Text = "STAND"
+    }
 
     // Zapobiega falowaniu (ripple effect) przy klikaniu w puste tło
     val interactionSource = remember { MutableInteractionSource() }
@@ -182,11 +212,11 @@ fun ThemePreviewOverlay(item: ShopItem, onDismiss: () -> Unit) {
                 ),
             shape = RoundedCornerShape(24.dp),
             color = BrandBlack,
-            border = BorderStroke(1.dp, BrandGold.copy(alpha = 0.5f))
+            border = BorderStroke(1.dp, goldColor.copy(alpha = 0.5f)) // Ramka pod kolor wybranego motywu!
         ) {
             Column {
                 Image(
-                    painter = painterResource(id = theme.bgResId),
+                    painter = painterResource(id = bgResId),
                     contentDescription = "Preview Background",
                     contentScale = ContentScale.Crop,
                     alignment = Alignment.BottomCenter,
@@ -208,11 +238,14 @@ fun ThemePreviewOverlay(item: ShopItem, onDismiss: () -> Unit) {
 
                     Text("THEME PALETTE", color = BrandGold, fontSize = 10.sp, letterSpacing = 2.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(14.dp))
+
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        ColorSwatch(theme.brandGold)
-                        ColorSwatch(theme.brandGoldLight)
-                        ColorSwatch(theme.buttonDark)
-                        ColorSwatch(theme.buttonStay)
+                        ColorSwatch(goldColor)
+                        ColorSwatch(goldLightColor)
+                        ColorSwatch(buttonDarkColor)
+                        if (buttonStayColor != null) {
+                            ColorSwatch(buttonStayColor)
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(28.dp))
@@ -223,8 +256,14 @@ fun ThemePreviewOverlay(item: ShopItem, onDismiss: () -> Unit) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        PreviewButton("HIT", Color.White, Color.Black, Modifier.weight(1f))
-                        PreviewButton("STAND", theme.buttonStay, theme.brandGold, Modifier.weight(1f))
+                        if (isCraps) {
+                            // Dla Craps pokazujemy jeden duży złoty przycisk "ROLL"
+                            PreviewButton(btn1Text, goldColor, Color(0xFF1A0F00), Modifier.weight(1f))
+                        } else {
+                            // Dla BJ pokazujemy dwa przyciski "HIT" i "STAND"
+                            PreviewButton(btn1Text, Color.White, Color.Black, Modifier.weight(1f))
+                            PreviewButton(btn2Text!!, buttonStayColor!!, goldColor, Modifier.weight(1f))
+                        }
                     }
                 }
             }

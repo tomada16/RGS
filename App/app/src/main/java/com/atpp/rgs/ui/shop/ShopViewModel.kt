@@ -38,16 +38,15 @@ val SHOP_CATALOG = listOf(
     ShopItem("bj_table_fireice", ItemCategory.BJ_TABLE, "Fire and Ice", "ELEMENTAL FURY", 250, "fireice", R.drawable.fireice_shop_bg),
     ShopItem("bj_table_onyx", ItemCategory.BJ_TABLE, "Onyx", "ARABIAN NIGHTS", 250, "onyx", R.drawable.onyx_shop_bg),
 
-
-    // KARTY (Domyślna talia dodana do katalogu, w cenie 0, bo i tak dajesz to za darmo)
-    ShopItem("bj_deck_classic", ItemCategory.BJ_DECK, "Classic Standard", "TRADITIONAL DECK", 0, "classic", R.drawable.classic_shop_bg), // Zmień R.drawable na podgląd rewersu!
-    // 2. Atlasnye (Rosyjski styl z XIX w.)
-    ShopItem("bj_deck_atlasnye", ItemCategory.BJ_DECK, "Imperial Atlasnye", "TSAR'S COLLECTION", 75, "atlasnye", R.drawable.atlasnye_shop_bg), // Zmień na obrazek pokazowy tej talii
-
-    // 3. Bresciane (Włoski styl regionalny)
+    // KARTY
+    ShopItem("bj_deck_classic", ItemCategory.BJ_DECK, "Classic Standard", "TRADITIONAL DECK", 0, "classic", R.drawable.classic_shop_bg),
+    ShopItem("bj_deck_atlasnye", ItemCategory.BJ_DECK, "Imperial Atlasnye", "TSAR'S COLLECTION", 75, "atlasnye", R.drawable.atlasnye_shop_bg),
     ShopItem("bj_deck_bresciane", ItemCategory.BJ_DECK, "Bresciane Heritage", "ITALIAN ELEGANCE", 150, "bresciane", R.drawable.bresciane_shop_bg),
 
-    ShopItem("craps_table_ocean", ItemCategory.CRAPS_TABLE, "Ocean Blue", "UNKNOWN DEPTHS", 50, "ocean", R.drawable.ocean_shop_bg),
+    // --- STOŁY DO CRAPS ---
+    ShopItem("craps_table_ocean", ItemCategory.CRAPS_TABLE, "Ocean Blue", "UNKNOWN DEPTHS", 50, "ocean_blue", R.drawable.ocean_shop_bg),
+    ShopItem("craps_table_solar", ItemCategory.CRAPS_TABLE, "Solar Flare", "DESERT HEAT", 150, "solar_flare", R.drawable.solar_shop_bg),
+    ShopItem("craps_table_rose", ItemCategory.CRAPS_TABLE, "Crimson Rose", "GOTHIC LUXURY", 250, "crimson_rose", R.drawable.rose_shop_bg),
 )
 
 class ShopViewModel(
@@ -57,23 +56,6 @@ class ShopViewModel(
 
     private val shopDao = app.database.shopDao()
     private val walletDao = app.database.walletDao()
-
-    init {
-        // --- ZESTAW STARTOWY (STARTER PACK) ---
-        viewModelScope.launch {
-            // 1. Zapewniamy, że gracz ZAWSZE posiada podstawowe przedmioty (Dao zignoruje, jeśli już ma)
-            shopDao.insertOwnedItem(OwnedItemEntity(userId, "bj_table_emerald"))
-            shopDao.insertOwnedItem(OwnedItemEntity(userId, "bj_deck_classic"))
-
-            // 2. Jeśli gracz to "świeżak" i nie ma wyekwipowanego NIC, zakładamy mu domyślne itemy
-            val currentEquip = shopDao.getEquippedItems(userId).firstOrNull()
-            if (currentEquip.isNullOrEmpty()) {
-                shopDao.equipItem(EquippedItemEntity(userId, ItemCategory.BJ_TABLE.name, "bj_table_emerald"))
-                shopDao.equipItem(EquippedItemEntity(userId, ItemCategory.BJ_DECK.name, "bj_deck_classic"))
-                shopDao.equipItem(EquippedItemEntity(userId, ItemCategory.CRAPS_TABLE.name, "craps_table_ocean"))
-            }
-        }
-    }
 
     val balance: StateFlow<Int> = walletDao.getWalletByUserId(userId)
         .combine(MutableStateFlow(0)) { wallet, _ -> wallet?.coins ?: 0 }

@@ -94,10 +94,6 @@ class BlackjackViewModel(
     private val _currentBet = MutableStateFlow(0.0)
     val currentBet: StateFlow<Double> = _currentBet.asStateFlow()
 
-    private val _pityGranted = MutableStateFlow(false)
-    val pityGranted: StateFlow<Boolean> = _pityGranted.asStateFlow()
-
-    fun onPityDismissed() { _pityGranted.value = false }
 
     private var lastBetAmount = 0.0
 
@@ -131,8 +127,8 @@ class BlackjackViewModel(
             if (actualAmount > 0) {
                 _balance.value -= actualAmount
                 _currentBet.value += actualAmount
-                // Zapisujemy stratę w bazie (minus)
-                viewModelScope.launch { walletDao.changeCoins(userId, -actualAmount.toInt()) }
+                // USUNIĘTO: viewModelScope.launch { walletDao.changeCoins(userId, -actualAmount.toInt()) }
+                // Zakład leży tylko w pamięci RAM do momentu rozdania.
             }
         }
     }
@@ -143,8 +139,7 @@ class BlackjackViewModel(
             if (betToClear > 0) {
                 _balance.value += betToClear
                 _currentBet.value = 0.0
-                // Zwracamy kasę do bazy (plus)
-                viewModelScope.launch { walletDao.changeCoins(userId, betToClear.toInt()) }
+                // USUNIĘTO: viewModelScope.launch { walletDao.changeCoins(userId, betToClear.toInt()) }
             }
         }
     }
@@ -189,8 +184,6 @@ class BlackjackViewModel(
             if (actualAmount > 0) {
                 _balance.value -= actualAmount
                 _currentBet.value += actualAmount
-                // Pobieramy dodatkowy zakład z bazy
-                viewModelScope.launch { walletDao.changeCoins(userId, -actualAmount.toInt()) }
             }
 
             val newHand = _playerHands.value[0].toMutableList()
@@ -284,8 +277,6 @@ class BlackjackViewModel(
         if (_balance.value >= splitBetAmount) {
             _balance.value -= splitBetAmount
             _currentBet.value += splitBetAmount
-            // Pobieramy rozbity zakład z bazy
-            viewModelScope.launch { walletDao.changeCoins(userId, -splitBetAmount.toInt()) }
         } else {
             return
         }
@@ -361,11 +352,10 @@ class BlackjackViewModel(
             _dealerHand.value = emptyList()
 
             delay(300)
-            _playerHands.value = listOf(listOf(drawCard())) // Pierwsza karta do pierwszej ręki
+            _playerHands.value = listOf(listOf(drawCard()))
             delay(300)
             _dealerHand.value = listOf(drawCard())
             delay(300)
-            // Dodajemy drugą kartę do pierwszej ręki
             val currentHand = _playerHands.value[0].toMutableList()
             currentHand.add(drawCard())
             _playerHands.value = listOf(currentHand)
@@ -386,26 +376,27 @@ class BlackjackViewModel(
     private fun payout(multiplier: Double) {
         val betForRound = _currentBet.value
         val wonAmount = betForRound * multiplier
+
+        // Aktualizacja lokalnego, wizualnego salda
         _balance.value += wonAmount
+
+        // ZMIANA: Kalkulujemy tylko ostateczny bilans NETTO dla bazy danych
+        val netAmount = (wonAmount - betForRound).toInt()
         _currentBet.value = 0.0
 
         viewModelScope.launch {
-            if (wonAmount > 0) {
-                walletDao.changeCoins(userId, wonAmount.toInt())
+            // Zapisujemy ostateczny wynik w bazie dopiero po zakończeniu rozdania
+            if (netAmount != 0) {
+                walletDao.changeCoins(userId, netAmount)
             }
+
             if (betForRound > 0) {
-                val net = (wonAmount - betForRound).toInt()
                 val outcome = when {
-                    net > 0 -> GameRepository.Outcome.WIN
-                    net < 0 -> GameRepository.Outcome.LOSE
+                    netAmount > 0 -> GameRepository.Outcome.WIN
+                    netAmount < 0 -> GameRepository.Outcome.LOSE
                     else    -> GameRepository.Outcome.PUSH
                 }
-                app.gameRepository.recordRound(userId, "Blackjack", outcome, betForRound.toInt(), net)
-            }
-            if (_balance.value < UserRepository.PITY_THRESHOLD) {
-                walletDao.changeCoins(userId, UserRepository.PITY_AMOUNT)
-                _balance.value += UserRepository.PITY_AMOUNT
-                _pityGranted.value = true
+                app.gameRepository.recordRound(userId, "Blackjack", outcome, betForRound.toInt(), netAmount)
             }
         }
     }

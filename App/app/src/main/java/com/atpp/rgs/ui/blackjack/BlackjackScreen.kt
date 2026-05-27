@@ -80,7 +80,7 @@ val EXTENDED_CHIP_VALUES = listOf(
 )
 
 fun getDynamicChips(balance: Double): List<Double> {
-    return EXTENDED_CHIP_VALUES.filter { it <= maxOf(balance, 10.0) }.takeLast(5)
+    return EXTENDED_CHIP_VALUES.filter { it <= balance }.takeLast(5)
 }
 
 @Composable
@@ -96,28 +96,10 @@ fun BlackjackScreen(
     val gameState       by viewModel.gameState.collectAsState()
     val balance         by viewModel.balance.collectAsState()
     val currentBet      by viewModel.currentBet.collectAsState()
-    val pityGranted     by viewModel.pityGranted.collectAsState()
 
     // POBIERANIE MOTYWU Z VIEWMODELU
     val theme by viewModel.currentTheme.collectAsState()
     val deckPrefix by viewModel.currentDeckPrefix.collectAsState()
-
-    if (pityGranted) {
-        AlertDialog(
-            onDismissRequest = viewModel::onPityDismissed,
-            title = { Text(stringResource(R.string.pity_dialog_title)) },
-            text  = {
-                Text(
-                    stringResource(R.string.pity_dialog_message, UserRepository.PITY_AMOUNT)
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = viewModel::onPityDismissed) {
-                    Text(stringResource(R.string.pity_dialog_btn))
-                }
-            }
-        )
-    }
 
     var showOverlay by remember { mutableStateOf(false) }
     var showBettingUI by remember { mutableStateOf(true) }
@@ -644,8 +626,8 @@ fun PlayerArea(hands: List<List<Card>>, activeHandIndex: Int, theme: TableTheme,
                                         enter = slideInVertically(initialOffsetY = { -1500 }, animationSpec = tween(500)) + fadeIn(),
                                         modifier = Modifier.offset(x = animatedX.dp).rotate(animatedRotation)
                                     ) {
-                                        // TUTAJ DODAŁEM PREFIKS DLA GRACZA
-                                        val imageName = "${deckPrefix}_${card.imageName}"
+                                        // ZMIANA: Ignorujemy prefiks dla podstawowej (klasycznej) talii
+                                        val imageName = if (deckPrefix == "classic") card.imageName else "${deckPrefix}_${card.imageName}"
                                         CardPlaceholder(imageName)
                                     }
                                 }
@@ -675,9 +657,9 @@ fun DealerArea(hand: List<Card>, gameState: GameState, theme: TableTheme, deckPr
                     val isHidden = (gameState == GameState.DEALING || gameState == GameState.ACTIVE) && index == 1
                     val flipRotation by animateFloatAsState(targetValue = if (isHidden) 180f else 0f, animationSpec = tween(500, easing = LinearOutSlowInEasing), label = "")
 
-                    // TUTAJ DODAŁEM PREFIKS DLA KRUPIERA (zarówno dla rewersu jak i awersu)
+                    // ZMIANA: Ignorujemy prefiks dla podstawowej (klasycznej) talii
                     val rawImageName = if (flipRotation > 90f) "card_back" else card.imageName
-                    val imageName = "${deckPrefix}_${rawImageName}"
+                    val imageName = if (deckPrefix == "classic") rawImageName else "${deckPrefix}_${rawImageName}"
 
                     this@Column.AnimatedVisibility(
                         visible = isVisible,
