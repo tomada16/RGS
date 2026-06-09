@@ -293,7 +293,19 @@ RGS/
 
 ## Makiety ekranów
 
-*(do uzupełnienia)* — linki/odnośniki do makiet zostaną dodane wkrótce.
+Makiety projektowe kluczowych ekranów aplikacji.
+
+| Logowanie | Menu główne | Sklep |
+|:---:|:---:|:---:|
+| ![Login](docs/mockups/login.png) | ![Main Menu](docs/mockups/main_menu.png) | ![Shop](docs/mockups/shop.png) |
+
+| Blackjack | Craps | Ustawienia |
+|:---:|:---:|:---:|
+| ![Blackjack](docs/mockups/blackjack.png) | ![Craps](docs/mockups/craps.png) | ![Settings](docs/mockups/settings.png) |
+
+| Profil użytkownika |
+|:---:|
+| ![User Panel](docs/mockups/user_panel.png) |
 
 ---
 
