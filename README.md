@@ -208,6 +208,10 @@ metody `setMasterVolume`, `setMusicVolume` (zapis do DataStore).
 
 Baza `rgs.db` (Room, wersja schematu **2**, `exportSchema = false`).
 
+Schemat relacji między tabelami:
+
+![Schemat bazy danych](docs/mockups/database.png)
+
 | Encja / tabela | Klucz | Najważniejsze kolumny | Opis |
 |----------------|-------|-----------------------|------|
 | `UserEntity` / `users` | `id` (auto) | `username`, `password_hash`, `created_at` | Konto użytkownika; hasło jako hash SHA-256. |
@@ -270,6 +274,8 @@ ViewModele konsumują repozytoria wyłącznie z poziomu `viewModelScope`.
 ```
 RGS/
 ├─ README.md
+├─ docs/
+│  └─ mockups/                  ← makiety ekranów i schemat bazy (PNG)
 └─ App/                         ← projekt Android Studio (Gradle)
    └─ app/src/main/
       ├─ java/com/atpp/rgs/
@@ -293,7 +299,19 @@ RGS/
 
 ## Makiety ekranów
 
-*(do uzupełnienia)* — linki/odnośniki do makiet zostaną dodane wkrótce.
+Makiety projektowe kluczowych ekranów aplikacji.
+
+| Logowanie | Menu główne | Sklep |
+|:---:|:---:|:---:|
+| ![Login](docs/mockups/login.png) | ![Main Menu](docs/mockups/main_menu.png) | ![Shop](docs/mockups/shop.png) |
+
+| Blackjack | Craps | Ustawienia |
+|:---:|:---:|:---:|
+| ![Blackjack](docs/mockups/blackjack.png) | ![Craps](docs/mockups/craps.png) | ![Settings](docs/mockups/settings.png) |
+
+| Profil użytkownika |
+|:---:|
+| ![User Panel](docs/mockups/user_panel.png) |
 
 ---
 
