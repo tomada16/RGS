@@ -274,6 +274,8 @@ ViewModele konsumują repozytoria wyłącznie z poziomu `viewModelScope`.
 ```
 RGS/
 ├─ README.md
+├─ docs/
+│  └─ mockups/                  ← makiety ekranów i schemat bazy (PNG)
 └─ App/                         ← projekt Android Studio (Gradle)
    └─ app/src/main/
       ├─ java/com/atpp/rgs/
