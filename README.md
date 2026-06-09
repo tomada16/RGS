@@ -14,6 +14,7 @@ kupuje kosmetyczne motywy w sklepie, śledzi statystyki i historię rozgrywek na
 
 - [Funkcje](#funkcje)
 - [Architektura](#architektura)
+- [Schemat nawigacji](#schemat-nawigacji)
 - [Kluczowe klasy aplikacji](#kluczowe-klasy-aplikacji)
 - [ViewModele — opis i odpowiedzialności](#viewmodele--opis-i-odpowiedzialności)
 - [Dodatkowe funkcjonalności](#dodatkowe-funkcjonalności)
@@ -83,6 +84,48 @@ Aplikacja realizuje wzorzec **MVVM** z jednokierunkowym przepływem danych (UDF)
   własną `Factory`.
 - **Nawigacja** — `AppRoot` z `NavHost` (ekrany: `auth`, `main_menu`, `blackjack`, `craps`).
   Przejścia między stołami a menu są maskowane efektem `CurtainTransition` (animowana kurtyna).
+
+---
+
+## Schemat nawigacji
+
+Graf przepływu między ekranami aplikacji. `AppRoot` reaguje na `SessionManager.currentUserId` —
+gdy `null`, użytkownik trafia na `AuthScreen`; po pomyślnym logowaniu/rejestracji na
+`MainMenuScreen`. Z menu osiągalne są wszystkie pozostałe ekrany, a wejście/wyjście ze stołów
+(`Blackjack`, `Craps`) jest maskowane animacją `CurtainTransition`.
+
+```mermaid
+flowchart TD
+    Auth["AuthScreen<br/><i>login / register</i>"]
+    Menu["MainMenuScreen<br/><i>lista gier + portfel</i>"]
+    Blackjack["BlackjackScreen"]
+    Craps["CrapsScreen"]
+    Shop["ShopScreen"]
+    Settings["SettingsScreen"]
+    Profile["ProfileScreen"]
+
+    Auth ==>|"login OK"| Menu
+
+    Menu -->|"play"| Blackjack
+    Menu -->|"play"| Craps
+    Menu --> Shop
+    Menu --> Settings
+    Menu --> Profile
+
+    Blackjack -->|"exit"| Menu
+    Craps -->|"exit"| Menu
+    Shop --> Menu
+    Settings --> Menu
+    Profile --> Menu
+
+    Profile -.->|"logout"| Auth
+```
+
+> Legenda:
+> - linie ciągłe — nawigacja w obrębie zalogowanej sesji,
+> - krawędzie `Menu ↔ Blackjack` oraz `Menu ↔ Craps` są maskowane animacją `CurtainTransition`,
+> - linie przerywane — wylogowanie (`SessionManager.logout()` zeruje `currentUserId`,
+>   co `AppRoot` reaktywnie przekierowuje na `AuthScreen`).
 
 ---
 
