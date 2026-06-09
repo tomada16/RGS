@@ -1,0 +1,112 @@
+<resources>
+    <!-- App-wide -->
+    <string name="app_name">Game room</string>
+    <string name="user_balance_format">$%1$,.2f</string>
+
+    <!-- Game catalog -->
+    <string name="btn_play_now">Play NOW!</string>
+    <string name="game_blackjack_name">Blackjack</string>
+    <string name="game_blackjack_desc">Classic 21 with elite side bets.</string>
+    <string name="game_craps_name">Craps</string>
+    <string name="game_craps_desc">The heartbeat of the casino floor. Master the dice.</string>
+
+    <!-- ============ Main Menu ============ -->
+    <string name="menu_welcome_to_the">WELCOME TO THE</string>
+    <string name="menu_vip_lounge">VIP Lounge</string>
+    <string name="menu_btn_join">JOIN</string>
+    <string name="menu_cd_coins">Your coin balance</string>
+    <string name="menu_cd_game_image">%1$s game image</string>
+    <string name="menu_placeholder_coming_soon">Coming soon…</string>
+    <string name="menu_btn_logout">Log out</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_menu">Menu</string>
+    <string name="nav_shop">Shop</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- ============ Auth screen ============ -->
+    <string name="auth_logo_cd">RGS logo</string>
+    <string name="auth_tagline">ELITE STATUS AWAITS</string>
+
+    <string name="auth_login_title">Welcome Back</string>
+    <string name="auth_login_subtitle">Please enter your credentials to access the VIP Lounge.</string>
+    <string name="auth_register_title">Create Account</string>
+    <string name="auth_register_subtitle">Sign up to claim your seat at the VIP Lounge.</string>
+
+    <string name="auth_label_username">USERNAME</string>
+    <string name="auth_label_password">PASSWORD</string>
+    <string name="auth_label_confirm_password">CONFIRM PASSWORD</string>
+
+    <string name="auth_placeholder_username">Enter account name</string>
+    <string name="auth_placeholder_password">Enter password</string>
+    <string name="auth_placeholder_confirm_password">Repeat password</string>
+
+    <string name="auth_btn_login">LOGIN</string>
+    <string name="auth_btn_register">CREATE ACCOUNT</string>
+
+    <string name="auth_toggle_to_register">Don\'t have an account? Sign up</string>
+    <string name="auth_toggle_to_login">Already have an account? Log in</string>
+
+    <string name="auth_error_password_mismatch">Passwords do not match</string>
+    <string name="auth_error_password_required">Please confirm your password</string>
+
+    <!-- ============ Settings ============ -->
+    <string name="settings_section_audio">ACOUSTICS &amp; AUDIO</string>
+    <string name="settings_master_volume">MASTER VOLUME</string>
+    <string name="settings_music_volume">BACKGROUND MUSIC</string>
+
+    <!-- ============ Profile ============ -->
+    <string name="profile_member_since">MEMBER SINCE %1$s</string>
+    <string name="profile_balance">BALANCE</string>
+    <string name="profile_section_stats">STATISTICS</string>
+    <string name="profile_section_history">GAME HISTORY</string>
+    <string name="profile_stat_games">Games played</string>
+    <string name="profile_stat_wins">Wins</string>
+    <string name="profile_stat_losses">Losses</string>
+    <string name="profile_stat_winrate">Win rate</string>
+    <string name="profile_stat_net">Net result</string>
+    <string name="profile_winrate_format">%1$d%%</string>
+    <string name="profile_history_empty">No games played yet. Hit the tables!</string>
+    <string name="profile_show_more">SHOW MORE</string>
+    <string name="profile_bet_format">Bet $%1$,d</string>
+    <string name="profile_result_win">WIN</string>
+    <string name="profile_result_lose">LOSE</string>
+    <string name="profile_result_push">PUSH</string>
+
+    <!-- ============ Pity system ============ -->
+    <string name="pity_dialog_title">Low Balance</string>
+    <string name="pity_dialog_message">Your balance dropped below $10. We\'ve added $%1$,d to keep you playing!</string>
+    <string name="pity_dialog_btn">COLLECT</string>
+
+    <!-- ============ Craps ============ -->
+    <!-- Table / point indicator -->
+    <string name="craps_roll_to_start">ROLL TO START</string>
+    <string name="craps_point_label">POINT</string>
+    <string name="craps_error_point_established">Bets locked during POINT phase!</string>
+
+    <!-- Bets -->
+    <string name="craps_place_your_bets">PLACE YOUR BETS</string>
+    <string name="craps_bet_pass">PASS</string>
+    <string name="craps_bet_line">LINE</string>
+
+    <!-- Bottom bar -->
+    <string name="craps_current_bet_label">CURRENT BET</string>
+    <string name="craps_btn_roll">ROLL</string>
+
+    <!-- Accessibility descriptions -->
+    <string name="craps_cd_balance">Wallet balance</string>
+    <string name="craps_cd_exit">Exit game</string>
+    <string name="craps_cd_undo">Undo bet</string>
+
+    <!-- Round result -->
+    <string name="craps_result_win_title">WIN!</string>
+    <string name="craps_result_lose_title">LOSE</string>
+    <string name="craps_result_win_subtitle">Pass Line wins</string>
+    <string name="craps_result_lose_subtitle">Try again</string>
+    <string name="craps_btn_new_round">NEW ROUND</string>
+
+    <!-- Error messages -->
+    <string name="craps_error_insufficient_funds">Insufficient funds!</string>
+    <string name="craps_error_no_bet">Place a bet before rolling!</string>
+</resources>
