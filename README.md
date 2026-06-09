@@ -208,6 +208,10 @@ metody `setMasterVolume`, `setMusicVolume` (zapis do DataStore).
 
 Baza `rgs.db` (Room, wersja schematu **2**, `exportSchema = false`).
 
+Schemat relacji między tabelami:
+
+![Schemat bazy danych](docs/mockups/database.png)
+
 | Encja / tabela | Klucz | Najważniejsze kolumny | Opis |
 |----------------|-------|-----------------------|------|
 | `UserEntity` / `users` | `id` (auto) | `username`, `password_hash`, `created_at` | Konto użytkownika; hasło jako hash SHA-256. |
